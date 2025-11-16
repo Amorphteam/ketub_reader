@@ -27,12 +27,20 @@ class EpubViewerScreenV2 extends StatefulWidget {
     this.enableContentCache = true,
     this.onBookmarksChanged,
     this.onAnchorIdTap,
+    this.onTranslatePressed,
   });
 
   final EpubViewerEntryData entryData;
   final bool enableContentCache;
   final Future<void> Function()? onBookmarksChanged;
   final void Function(BuildContext context, String anchorId)? onAnchorIdTap;
+  final void Function(
+    BuildContext context, {
+    required int pageNumber,
+    required String? sectionName,
+    required String? bookName,
+    required String? bookPath,
+  })? onTranslatePressed;
 
   @override
   _EpubViewerScreenV2State createState() => _EpubViewerScreenV2State();
@@ -224,6 +232,10 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
                   onStylePressed: () => _showStyleBottomSheet(context, cubit, stateData),
                   onBookmarkPressed: () => _handleBookmarkToggle(context, cubit),
                   onTocPressed: () => _showTocBottomSheet(context, cubit, isDarkMode),
+                  showTranslateButton: widget.onTranslatePressed != null,
+                  onTranslatePressed: widget.onTranslatePressed != null
+                      ? () => _handleTranslatePressed(context, stateData)
+                      : null,
                 )
               : null,
           body: Stack(
@@ -613,6 +625,43 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
       return cubitResults;
     }
     return stateData.searchResults;
+  }
+
+  void _handleTranslatePressed(
+    BuildContext context,
+    EpubViewerStateData stateData,
+  ) {
+    final callback = widget.onTranslatePressed;
+    if (callback == null) return;
+
+    final cubit = context.read<EpubViewerCubit>();
+    final int pageNumber = cubit.currentPage;
+
+    // Best-effort book name from state or cubit cache.
+    final String? bookName = stateData.bookTitle.isNotEmpty
+        ? stateData.bookTitle
+        : cubit.cachedBookTitle;
+
+    // Book path from entry data (primary if available, otherwise fallbacks).
+    final data = widget.entryData;
+    final String? bookPath = data.primaryBookPath ??
+        data.bookmarkBookPath ??
+        data.historyBookPath ??
+        data.searchBookPath ??
+        data.tocBookPath ??
+        data.deepLinkBookPath;
+
+    // There is no explicit "section name" in the viewer state; host apps
+    // can derive richer context from pageNumber + bookName/bookPath if needed.
+    const String? sectionName = null;
+
+    callback(
+      context,
+      pageNumber: pageNumber,
+      sectionName: sectionName,
+      bookName: bookName,
+      bookPath: bookPath,
+    );
   }
   
   void _scrollToHighlight(String highlightId) {

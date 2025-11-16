@@ -15,6 +15,8 @@ class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onStylePressed;
   final VoidCallback? onBookmarkPressed;
   final VoidCallback? onTocPressed;
+  final VoidCallback? onTranslatePressed;
+  final bool showTranslateButton;
 
   const EpubViewerAppBar({
     super.key,
@@ -29,6 +31,8 @@ class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onStylePressed,
     this.onBookmarkPressed,
     this.onTocPressed,
+    this.onTranslatePressed,
+    this.showTranslateButton = false,
   });
 
   @override
@@ -92,6 +96,15 @@ class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
                         : Icons.bookmark_border),
                 onPressed: onBookmarkPressed,
               ),
+              if (showTranslateButton)
+                IconButton(
+                  icon: Icon(
+                    isIOS
+                        ? CupertinoIcons.globe
+                        : Icons.translate_rounded,
+                  ),
+                  onPressed: onTranslatePressed,
+                ),
               IconButton(
                 icon: Icon(
                     isIOS ? CupertinoIcons.list_bullet : Icons.toc_rounded),
