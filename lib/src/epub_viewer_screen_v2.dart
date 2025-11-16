@@ -26,11 +26,13 @@ class EpubViewerScreenV2 extends StatefulWidget {
     required this.entryData,
     this.enableContentCache = true,
     this.onBookmarksChanged,
+    this.onAnchorIdTap,
   });
 
   final EpubViewerEntryData entryData;
   final bool enableContentCache;
   final Future<void> Function()? onBookmarksChanged;
+  final void Function(BuildContext context, String anchorId)? onAnchorIdTap;
 
   @override
   _EpubViewerScreenV2State createState() => _EpubViewerScreenV2State();
@@ -506,6 +508,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
             useUniformTextColor: stateData.useUniformTextColor,
             uniformTextColor: stateData.uniformTextColor,
             styleSignature: styleSignature,
+            onAnchorIdTap: widget.onAnchorIdTap,
           ),
         ),
         EpubPageSlider(

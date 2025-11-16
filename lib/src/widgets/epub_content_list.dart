@@ -20,6 +20,7 @@ class EpubContentList extends StatelessWidget {
   final bool useUniformTextColor;
   final Color uniformTextColor;
   final String styleSignature;
+  final void Function(BuildContext context, String anchorId)? onAnchorIdTap;
 
   const EpubContentList({
     super.key,
@@ -39,6 +40,7 @@ class EpubContentList extends StatelessWidget {
     required this.useUniformTextColor,
     required this.uniformTextColor,
     required this.styleSignature,
+    this.onAnchorIdTap,
   });
 
   @override
@@ -82,6 +84,7 @@ class EpubContentList extends StatelessWidget {
               backgroundColor: backgroundColor,
               uniformTextColor: useUniformTextColor ? uniformTextColor : null,
               anchorKey: isCurrentPage ? currentPageKey : null,
+              onAnchorIdTap: onAnchorIdTap,
             ),
           ),
         ),
