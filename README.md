@@ -7,15 +7,39 @@ A monorepo containing reusable EPUB reader packages for Flutter applications.
 ### 📖 [epub_viewer](./packages/epub_viewer)
 Core EPUB viewer package with reading functionality, bookmarks, history, and search support.
 
-### 🔖 epub_bookmarks
-Bookmark and history management screens (coming soon).
+### 🔖 [epub_bookmarks](./packages/epub_bookmarks)
+Bookmark and history management screens for EPUB readers.
 
 ### 🔍 epub_search
 Full-text search functionality across EPUB books (coming soon).
 
 ## Installation
 
-Each package can be installed independently:
+Each package can be installed independently or together.
+
+### 1. Using Only `epub_viewer`
+
+```yaml
+dependencies:
+  epub_viewer:
+    git:
+      url: https://github.com/Amorphteam/ketub_reader.git
+      ref: epub_viewer-v0.1.0  # or latest tag
+      path: packages/epub_viewer
+```
+
+### 2. Using Only `epub_bookmarks`
+
+```yaml
+dependencies:
+  epub_bookmarks:
+    git:
+      url: https://github.com/Amorphteam/ketub_reader.git
+      ref: epub_bookmarks-v0.1.0  # or latest tag
+      path: packages/epub_bookmarks
+```
+
+### 3. Using Both Packages
 
 ```yaml
 dependencies:
@@ -24,13 +48,15 @@ dependencies:
       url: https://github.com/Amorphteam/ketub_reader.git
       ref: epub_viewer-v0.1.0
       path: packages/epub_viewer
+  
+  epub_bookmarks:
+    git:
+      url: https://github.com/Amorphteam/ketub_reader.git
+      ref: epub_bookmarks-v0.1.0
+      path: packages/epub_bookmarks
 ```
 
-Or from pub.dev (when published):
-```yaml
-dependencies:
-  epub_viewer: ^0.1.0
-```
+See [USAGE_EXAMPLES.md](./USAGE_EXAMPLES.md) for detailed implementation examples.
 
 ## Development
 
