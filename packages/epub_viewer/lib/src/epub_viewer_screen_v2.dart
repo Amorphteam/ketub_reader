@@ -64,6 +64,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
 
   bool _hasLoadedEpub = false;
   bool _hasHandledInitialPageJump = false;
+  EpubViewerCubit? _cubit; // Cache cubit reference for safe disposal
 
   @override
   void initState() {
@@ -75,6 +76,8 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // Cache cubit reference for safe disposal
+    _cubit ??= context.read<EpubViewerCubit>();
     // Load EPUB based on source (only once)
     if (!_hasLoadedEpub) {
       _hasLoadedEpub = true;
@@ -171,11 +174,12 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
   void dispose() {
     // History saving is handled by cubit.close() which is called automatically
     // But we also save here to ensure it happens before widget disposal
-    final cubit = context.read<EpubViewerCubit>();
-    cubit.saveCurrentHistory();
-    cubit.saveCurrentPageProgress();
-    
-    cubit.cancelIOSSliderDebounce();
+    // Use cached cubit reference instead of context.read() which is unsafe in dispose()
+    if (_cubit != null) {
+      _cubit!.saveCurrentHistory();
+      _cubit!.saveCurrentPageProgress();
+      _cubit!.cancelIOSSliderDebounce();
+    }
     _processedContentCache.clear();
     _lastContentListRef = null;
     itemPositionsListener.itemPositions.removeListener(_itemPositionsListenerCallback);
