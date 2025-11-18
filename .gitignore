@@ -37,4 +37,5 @@ build/
 *.log
 coverage/
 
-
+# FVM Version Cache
+.fvm/
