@@ -14,7 +14,7 @@ dependencies:
   epub_viewer:
     git:
       url: https://github.com/Amorphteam/ketub_reader.git
-      ref: epub_viewer-v0.1.0  # Use the latest tag
+      ref: v0.0.1-beta  # Shared repo tag; run `git tag` to confirm latest
       path: packages/epub_viewer
 ```
 
@@ -55,7 +55,7 @@ dependencies:
   epub_bookmarks:
     git:
       url: https://github.com/Amorphteam/ketub_reader.git
-      ref: epub_bookmarks-v0.1.0  # Use the latest tag
+      ref: v0.0.1-beta  # Same tag works for all packages
       path: packages/epub_bookmarks
 ```
 
@@ -99,13 +99,13 @@ dependencies:
   epub_viewer:
     git:
       url: https://github.com/Amorphteam/ketub_reader.git
-      ref: epub_viewer-v0.1.0
+      ref: v0.0.1-beta
       path: packages/epub_viewer
   
   epub_bookmarks:
     git:
       url: https://github.com/Amorphteam/ketub_reader.git
-      ref: epub_bookmarks-v0.1.0
+      ref: v0.0.1-beta
       path: packages/epub_bookmarks
 ```
 
@@ -144,17 +144,107 @@ BookmarkScreen(
 
 ---
 
+## 4. Using Only `epub_search`
+
+If you want the standalone global search UI:
+
+```yaml
+dependencies:
+  epub_search:
+    git:
+      url: https://github.com/Amorphteam/ketub_reader.git
+      ref: v0.0.1-beta
+      path: packages/epub_search
+```
+
+### Implementation Example:
+
+```dart
+import 'package:epub_search/epub_search.dart';
+
+class _BookRepo implements BookDataSource {
+  @override
+  Future<List<Book>> getBooks() async {
+    return const [
+      Book(title: 'Sample Book', epub: 'books/sample.epub'),
+    ];
+  }
+}
+
+class _RecentSearchStore implements RecentSearchesDataSource {
+  final _cache = <String>[];
+
+  @override
+  Future<List<String>> getRecentSearches() async => _cache;
+
+  @override
+  Future<void> saveRecentSearches(List<String> searches) async {
+    _cache
+      ..clear()
+      ..addAll(searches);
+  }
+
+  @override
+  Future<void> addRecentSearch(String term) async {}
+
+  @override
+  Future<void> removeRecentSearch(String term) async {}
+}
+
+SearchScreen(
+  bookDataSource: _BookRepo(),
+  recentSearchesDataSource: _RecentSearchStore(),
+  onResultTap: (result) {
+    // Navigate to your viewer, passing result.pageIndex
+  },
+  assetPathPrefix: 'assets/epub/',
+);
+```
+
+---
+
+## 5. Using All Packages Together
+
+```yaml
+dependencies:
+  epub_viewer:
+    git:
+      url: https://github.com/Amorphteam/ketub_reader.git
+      ref: v0.0.1-beta
+      path: packages/epub_viewer
+
+  epub_bookmarks:
+    git:
+      url: https://github.com/Amorphteam/ketub_reader.git
+      ref: v0.0.1-beta
+      path: packages/epub_bookmarks
+
+  epub_search:
+    git:
+      url: https://github.com/Amorphteam/ketub_reader.git
+      ref: v0.0.1-beta
+      path: packages/epub_search
+```
+
+### Integration Sketch:
+
+- **Viewer ↔ Bookmarks**: reuse your bookmark/history data sources so both packages stay in sync.
+- **Viewer ↔ Search**: inside `onResultTap`, push `EpubViewerScreenV2` with the `SearchModel.pageIndex` to deep-link into the EPUB.
+- **Search ↔ Bookmarks**: optionally add search results to history or bookmarks when users tap on them for consistent UX.
+
+---
+
 ## Notes
 
 - **Independent Packages**: Each package can be used independently
 - **Shared Interfaces**: Both use similar interface patterns for easy integration
-- **Version Tags**: Use specific version tags (e.g., `epub_viewer-v0.1.0`) for stability
+- **Version Tags**: Use the shared repo tag (e.g., `v0.0.1-beta`) until package-specific tags are published
 - **Latest Version**: Use `main` branch for latest (not recommended for production)
 
 ## Version Tags
 
 Check available tags:
 ```bash
-git ls-remote --tags https://github.com/Amorphteam/ketub_reader.git | grep -E "epub_viewer|epub_bookmarks"
+git ls-remote --tags https://github.com/Amorphteam/ketub_reader.git
 ```
 
