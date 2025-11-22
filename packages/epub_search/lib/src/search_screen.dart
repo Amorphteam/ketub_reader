@@ -1,149 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'interfaces.dart';
+import 'models/search_persistence.dart';
 import 'search_app_bar.dart';
-import 'search_service.dart';
 import 'widgets/book_selection_sheet.dart';
 import 'widgets/search_results_widget.dart';
-
-/// Search state using freezed-like pattern
-abstract class SearchState {
-  const SearchState();
-}
-
-class SearchInitial extends SearchState {
-  const SearchInitial();
-}
-
-class SearchLoading extends SearchState {
-  const SearchLoading();
-}
-
-class SearchLoaded extends SearchState {
-  final List<SearchModel> searchResults;
-  final bool isRunningSearch;
-
-  const SearchLoaded({
-    required this.searchResults,
-    required this.isRunningSearch,
-  });
-}
-
-class SearchLoadedList extends SearchState {
-  final List<Book> books;
-
-  const SearchLoadedList(this.books);
-}
-
-class SearchError extends SearchState {
-  final String error;
-
-  const SearchError(this.error);
-}
-
-/// Search Cubit for managing search state
-class SearchCubit extends Cubit<SearchState> {
-  SearchCubit({
-    required this.bookDataSource,
-    required this.recentSearchesDataSource,
-    this.assetPathPrefix = 'assets/epub/',
-  }) : super(const SearchInitial());
-
-  final BookDataSource bookDataSource;
-  final RecentSearchesDataSource recentSearchesDataSource;
-  final String assetPathPrefix;
-
-  List<String> _allBookPaths = [];
-  Map<String, bool> _selectedBooks = {};
-
-  Future<void> fetchBooksList() async {
-    final List<Book> books = await bookDataSource.getBooks();
-
-    final Set<String> allPaths = {};
-    for (var book in books) {
-      if (book.epub.isNotEmpty) {
-        allPaths.add(book.epub);
-      }
-      for (var series in book.series ?? []) {
-        if (series.epub.isNotEmpty) {
-          allPaths.add(series.epub);
-        }
-      }
-    }
-
-    _allBookPaths = allPaths.toList();
-    _selectedBooks = {for (var path in _allBookPaths) path: true};
-
-    emit(SearchLoadedList(books));
-    // Note: Preloading is handled by preloadSelectedBooks() called from UI
-  }
-
-  void updateSelectedBooks(Map<String, bool> selectedBooks) {
-    _selectedBooks = selectedBooks;
-  }
-
-  /// Pre-load selected books in the background
-  void preloadSelectedBooks() {
-    EpubSearchService().preloadBooks(
-      bookPaths: _allBookPaths,
-      selectedBooks: _selectedBooks,
-      assetPathPrefix: assetPathPrefix,
-    );
-  }
-
-  Map<String, bool> get selectedBooks => _selectedBooks;
-
-  Future<void> search(String searchTerm, {int? maxResultsPerBook}) async {
-    try {
-      emit(const SearchLoading());
-      final Set<SearchModel> uniqueResults = {};
-
-      await EpubSearchService().searchAllBooks(
-        bookPaths: _allBookPaths,
-        selectedBooks: _selectedBooks,
-        searchTerm: searchTerm,
-        maxResultsPerBook: maxResultsPerBook,
-        onPartialResults: (partialResults) {
-          uniqueResults.addAll(partialResults);
-          emit(SearchLoaded(
-            searchResults: uniqueResults.toList(),
-            isRunningSearch: true,
-          ));
-        },
-        assetPathPrefix: assetPathPrefix,
-      );
-
-      emit(SearchLoaded(
-        searchResults: uniqueResults.toList(),
-        isRunningSearch: false,
-      ));
-    } catch (error) {
-      emit(SearchError(error.toString()));
-    }
-  }
-
-  void resetState() {
-    try {
-      emit(const SearchInitial());
-    } catch (e) {
-      // Cubit might be closed, ignore
-    }
-  }
-}
+import 'cubit/search_cubit.dart';
+import 'cubit/search_state.dart';
 
 /// Main search screen widget
 class SearchScreen extends StatefulWidget {
   const SearchScreen({
     Key? key,
-    required this.bookDataSource,
-    required this.recentSearchesDataSource,
+    required this.persistence,
     this.onResultTap,
     this.title = "البحث العام",
     this.assetPathPrefix = 'assets/epub/',
   }) : super(key: key);
 
-  final BookDataSource bookDataSource;
-  final RecentSearchesDataSource recentSearchesDataSource;
+  final SearchPersistence persistence;
   final OnSearchResultTap? onResultTap;
   final String title;
   final String assetPathPrefix;
@@ -164,8 +39,7 @@ class _SearchScreenState extends State<SearchScreen> {
   void initState() {
     super.initState();
     _cubit = SearchCubit(
-      bookDataSource: widget.bookDataSource,
-      recentSearchesDataSource: widget.recentSearchesDataSource,
+      persistence: widget.persistence,
       assetPathPrefix: widget.assetPathPrefix,
     );
     _cubit.fetchBooksList().then((_) {
@@ -329,7 +203,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _loadRecentSearches() async {
-    _recentSearches = await widget.recentSearchesDataSource.getRecentSearches();
+    _recentSearches = await widget.persistence.recentSearchesDataSource.getRecentSearches();
     if (mounted) setState(() {});
   }
 
@@ -347,7 +221,7 @@ class _SearchScreenState extends State<SearchScreen> {
       _recentSearches = limited;
     });
 
-    await widget.recentSearchesDataSource.saveRecentSearches(limited);
+    await widget.persistence.recentSearchesDataSource.saveRecentSearches(limited);
   }
 
   Future<void> _removeRecentSearch(String term) async {
@@ -355,6 +229,6 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() {
       _recentSearches = updated;
     });
-    await widget.recentSearchesDataSource.saveRecentSearches(updated);
+    await widget.persistence.recentSearchesDataSource.saveRecentSearches(updated);
   }
 }
