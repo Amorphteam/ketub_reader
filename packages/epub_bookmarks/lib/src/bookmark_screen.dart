@@ -155,7 +155,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
 
   PreferredSizeWidget _buildDefaultAppBar() {
     return BookmarkAppBar(
-      title: 'Bookmarks',
+      title: 'الإشارات',
     );
   }
 
