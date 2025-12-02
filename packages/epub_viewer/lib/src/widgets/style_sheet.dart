@@ -313,7 +313,10 @@ class _StyleSheetState extends State<StyleSheet> {
                           },
                         ),
                 ),
-                const Icon(Icons.text_increase),
+                Padding(
+                  padding: const EdgeInsets.only(left: 26.0),
+                  child: const Icon(Icons.text_increase),
+                ),
               ],
             ),
             Row(
@@ -351,10 +354,25 @@ class _StyleSheetState extends State<StyleSheet> {
                           },
                         ),
                 ),
-                const Icon(Icons.format_line_spacing),
+                Padding(
+                  padding: const EdgeInsets.only(left: 26.0),
+                  child: const Icon(Icons.format_line_spacing),
+                ),
               ],
             ),
             const SizedBox(height: 24),
+            SwitchListTile(
+              title: const Text('إخفاء التشكيل (الحركات)'),
+              value: _hideArabicDiacritics,
+              onChanged: (value) {
+                setState(() {
+                  _hideArabicDiacritics = value;
+                });
+                widget.epubViewerCubit
+                    .changeStyle(hideArabicDiacritics: value);
+              },
+            ),
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 26),
               child: Text(
@@ -386,17 +404,6 @@ class _StyleSheetState extends State<StyleSheet> {
                 });
                 widget.epubViewerCubit
                     .changeStyle(useUniformTextColor: value);
-              },
-            ),
-            SwitchListTile(
-              title: const Text('إخفاء التشكيل (الحركات)'),
-              value: _hideArabicDiacritics,
-              onChanged: (value) {
-                setState(() {
-                  _hideArabicDiacritics = value;
-                });
-                widget.epubViewerCubit
-                    .changeStyle(hideArabicDiacritics: value);
               },
             ),
             AnimatedSwitcher(

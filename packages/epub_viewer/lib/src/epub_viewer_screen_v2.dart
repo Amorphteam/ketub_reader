@@ -527,19 +527,22 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
             onAnchorIdTap: widget.onAnchorIdTap,
           ),
         ),
-        EpubPageSlider(
-          currentPage: sliderValue,
-          maxPages: content.length.toDouble(),
-          bookTitle: bookTitle,
-          isAboutUsBook: cubit.isAboutUsBook,
-          onChanged: _handleSliderChanged,
-          onChangedEnd: defaultTargetPlatform == TargetPlatform.iOS
-              ? null
-              : _handleSliderChangeEnd,
-          onPageJump: () {
-            final cubit = context.read<EpubViewerCubit>();
-            _handlePageJump(context, cubit, content.length);
-          },
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16.0),
+          child: EpubPageSlider(
+            currentPage: sliderValue,
+            maxPages: content.length.toDouble(),
+            bookTitle: bookTitle,
+            isAboutUsBook: cubit.isAboutUsBook,
+            onChanged: _handleSliderChanged,
+            onChangedEnd: defaultTargetPlatform == TargetPlatform.iOS
+                ? null
+                : _handleSliderChangeEnd,
+            onPageJump: () {
+              final cubit = context.read<EpubViewerCubit>();
+              _handlePageJump(context, cubit, content.length);
+            },
+          ),
         ),
       ],
     );
