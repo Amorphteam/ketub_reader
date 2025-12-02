@@ -310,8 +310,26 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
         cubit.loadUserPreferences();
       },
       searchResultsFound: (searchResults) {
+        // Check if there are no search results
+        if (searchResults.isEmpty) {
+          // Get the search term from the text controller
+          final searchTerm = textEditingController.text;
+          final displayQuery = searchTerm.isEmpty ? '...' : searchTerm;
+          
+          // Show snackbar to inform user that no results were found
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'لم يتم العثور على "$displayQuery"',
+                textAlign: TextAlign.center,
+              ),
+              duration: const Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
         // Search results are handled automatically by cubit (auto-highlights first result)
-        // No additional action needed here
+        // No additional action needed here when results are found
       },
       contentHighlighted: (content, highlightedIndex, pageHighlights) {
         // Scroll to the highlighted page
