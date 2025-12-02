@@ -5,11 +5,19 @@ import '../cubit/epub_viewer_cubit.dart';
 
 class EpubChapterListWidget extends StatefulWidget {
 
-  const EpubChapterListWidget({super.key, required this.tocTreeList, required this.scrollController, required this.epubViewerCubit, required this.onClose});
+  const EpubChapterListWidget({
+    super.key, 
+    required this.tocTreeList, 
+    required this.scrollController, 
+    required this.epubViewerCubit, 
+    required this.onClose,
+    this.onNavigate,
+  });
   final List<EpubChapter> tocTreeList;
   final ScrollController scrollController; // Add a ScrollController parameter
   final EpubViewerCubit epubViewerCubit;
   final Function onClose;
+  final VoidCallback? onNavigate; // Callback to request jump before navigation
 
   @override
   State<EpubChapterListWidget> createState() => _EpubChapterListWidgetState();
@@ -53,6 +61,7 @@ class _EpubChapterListWidgetState extends State<EpubChapterListWidget> {
         child: ExpansionTile(
           title: GestureDetector(
             onLongPress: (){
+              widget.onNavigate?.call();
               widget.epubViewerCubit.openEpubByChapter(chapter);
               widget.onClose();
             },
@@ -65,6 +74,7 @@ class _EpubChapterListWidgetState extends State<EpubChapterListWidget> {
           children: hasSubItems ? chapter.SubChapters!.map((child) => buildTreeNode(child, level + 1, context)).toList() : [],
           onExpansionChanged: (bool expanded) {
             if (!hasSubItems) {
+              widget.onNavigate?.call();
               widget.epubViewerCubit.openEpubByChapter(chapter);
               widget.onClose();
             }

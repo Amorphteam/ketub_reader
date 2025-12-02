@@ -893,6 +893,9 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
                         Navigator.pop(context);
                       });
                     },
+                    onNavigate: () {
+                      _navigationCoordinator.requestJump();
+                    },
                   ),
                 ),
                 // Use ValueListenableBuilder to react to changes in showAppBar
