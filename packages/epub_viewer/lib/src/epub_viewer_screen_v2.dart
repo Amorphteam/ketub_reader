@@ -65,6 +65,8 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
   bool _hasLoadedEpub = false;
   bool _hasHandledInitialPageJump = false;
   EpubViewerCubit? _cubit; // Cache cubit reference for safe disposal
+  Timer? _scrollDebounceTimer; // Debounce scroll listener to reduce emissions
+  bool _isPageChangeFromScroll = false; // Track if page change came from scroll
 
   @override
   void initState() {
@@ -88,6 +90,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
 
   void _setupScrollListener() {
     // Listen to scroll position changes to update current page
+    // Debounced to reduce unnecessary state emissions and rebuilds
     _itemPositionsListenerCallback = () {
       final positions = itemPositionsListener.itemPositions.value;
       if (positions.isEmpty ||
@@ -106,11 +109,22 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
         (max, position) => position.index > max.index ? position : max,
       ).index;
 
-      // Update cubit's current page
-      final cubit = context.read<EpubViewerCubit>();
-      if (cubit.currentPage != currentPageIndex) {
-        cubit.updateCurrentPageFromScroll(currentPageIndex);
-      }
+      // Debounce scroll updates to reduce state emissions and rebuilds
+      _scrollDebounceTimer?.cancel();
+      _scrollDebounceTimer = Timer(const Duration(milliseconds: 150), () {
+        if (!mounted) return;
+        
+        final cubit = context.read<EpubViewerCubit>();
+        if (cubit.currentPage != currentPageIndex) {
+          // Mark that this page change is from scroll (not programmatic)
+          _isPageChangeFromScroll = true;
+          cubit.updateCurrentPageFromScroll(currentPageIndex);
+          // Reset flag after a short delay to allow state emission to process
+          Future.delayed(const Duration(milliseconds: 50), () {
+            _isPageChangeFromScroll = false;
+          });
+        }
+      });
     };
     itemPositionsListener.itemPositions.addListener(_itemPositionsListenerCallback);
   }
@@ -172,6 +186,10 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
 
   @override
   void dispose() {
+    // Cancel scroll debounce timer to prevent leaks
+    _scrollDebounceTimer?.cancel();
+    _scrollDebounceTimer = null;
+    
     // History saving is handled by cubit.close() which is called automatically
     // But we also save here to ensure it happens before widget disposal
     // Use cached cubit reference instead of context.read() which is unsafe in dispose()
@@ -354,11 +372,12 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
           }
         }
         // Scroll to the page when pageChanged is emitted from cubit
-        if (pageNumber != null) {
+        // BUT skip if the change came from scroll (to prevent circular scroll loop)
+        if (pageNumber != null && !_isPageChangeFromScroll) {
           final cubit = context.read<EpubViewerCubit>();
           final highlightId = cubit.getCurrentHighlightId();
           
-          // Scroll to page (only if page changed)
+          // Scroll to page (only if page changed and not from scroll)
           _scrollToPage(pageNumber);
           
           // If this is a highlight navigation, scroll to the highlight
@@ -366,6 +385,25 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
           if (highlightId != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               // Add a small delay to ensure the HTML widget has rendered with the anchor
+              Future.delayed(const Duration(milliseconds: 100), () {
+                if (mounted) {
+                  _scrollToHighlight(highlightId);
+                }
+              });
+            });
+          }
+        } else if (pageNumber != null && _isPageChangeFromScroll) {
+          // Page changed from scroll - only update the key if needed, don't scroll
+          // This prevents circular scroll loops while still updating the anchor key for highlights
+          final cubit = context.read<EpubViewerCubit>();
+          final highlightId = cubit.getCurrentHighlightId();
+          
+          // Update page key for highlight navigation without triggering scroll
+          _navigationCoordinator.updateCurrentPageKey(pageNumber);
+          
+          // If there's a highlight, scroll to it after a delay
+          if (highlightId != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
               Future.delayed(const Duration(milliseconds: 100), () {
                 if (mounted) {
                   _scrollToHighlight(highlightId);
@@ -397,6 +435,8 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
   }
 
   void _scrollToPage(int pageNumber) {
+    // Only update the key if this is a programmatic jump (not from scroll)
+    // This prevents unnecessary GlobalKey recreation on every scroll
     final bool pageChanged = _navigationCoordinator.updateCurrentPageKey(pageNumber);
 
     if (!itemScrollController.isAttached) {
@@ -995,6 +1035,8 @@ class _NavigationCoordinator {
 
   bool updateCurrentPageKey(int pageNumber) {
     final bool pageChanged = _lastPageForKey != pageNumber;
+    // Only recreate GlobalKey when page actually changed
+    // This prevents unnecessary widget recreation on every scroll event
     if (pageChanged) {
       _currentPageKey = GlobalKey();
       _lastPageForKey = pageNumber;
