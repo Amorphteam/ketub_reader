@@ -76,7 +76,12 @@ String embedImagesInHtmlContent(EpubTextContentFile htmlFile, Map<String, EpubBy
 }
 
 List<HtmlFileInfo> reorderHtmlFilesBasedOnSpine(List<HtmlFileInfo> htmlFiles, List<String>? spineItems) {
-  if (spineItems == null || spineItems.isEmpty) return htmlFiles;
+  // If spine items are empty or null, ensure we still have a properly ordered list
+  if (spineItems == null || spineItems.isEmpty) {
+    // Sort the HTML files by their page index to ensure consistent ordering
+    htmlFiles.sort((a, b) => a.pageIndex.compareTo(b.pageIndex));
+    return htmlFiles;
+  }
 
   final Map<String, HtmlFileInfo> htmlFilesMap = {
     for (final file in htmlFiles) file.fileName.replaceAll('Text/', ''): file,
@@ -84,11 +89,41 @@ List<HtmlFileInfo> reorderHtmlFilesBasedOnSpine(List<HtmlFileInfo> htmlFiles, Li
 
   final List<HtmlFileInfo> orderedFiles = [];
   for (final spineItem in spineItems) {
-    final HtmlFileInfo? file = htmlFilesMap[spineItem.replaceFirst('x', '')];
+    HtmlFileInfo? file;
+
+    // Try multiple matching strategies to handle different spine item formats
+    // 1. If spine item starts with 'x', remove it and append '.xhtml' (e.g., 'x8' -> '8.xhtml')
+    if (spineItem.startsWith('x')) {
+      final keyWithoutX = spineItem.replaceFirst('x', '');
+      file = htmlFilesMap['$keyWithoutX.xhtml'];
+    }
+
+    // 2. If not found and spine item doesn't start with 'x', try appending '.xhtml' directly (e.g., 'moqadameh' -> 'moqadameh.xhtml')
+    if (file == null && !spineItem.startsWith('x')) {
+      file = htmlFilesMap['$spineItem.xhtml'];
+    }
+
+    // 3. Try matching the spine item directly (in case it already has extension or matches exactly)
+    if (file == null) {
+      file = htmlFilesMap[spineItem];
+    }
+
+    // 4. As a fallback, try removing 'x' and matching without extension (e.g., 'x8' -> '8')
+    if (file == null && spineItem.startsWith('x')) {
+      file = htmlFilesMap[spineItem.replaceFirst('x', '')];
+    }
+
     if (file != null) {
       orderedFiles.add(file);
     }
   }
+
+  // If no files were ordered by spine, fall back to the original sorted list
+  if (orderedFiles.isEmpty) {
+    htmlFiles.sort((a, b) => a.pageIndex.compareTo(b.pageIndex));
+    return htmlFiles;
+  }
+
   return orderedFiles;
 }
 
