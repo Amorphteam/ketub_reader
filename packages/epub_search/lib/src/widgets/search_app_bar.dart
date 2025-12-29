@@ -5,36 +5,44 @@ import 'package:flutter/material.dart';
 /// This is a self-contained version to break dependencies
 class SearchAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String title;
+  final IconData? leftIcon;
   final Widget? leftWidget;
+  final IconData? rightIcon;
   final Widget? rightWidget;
   final VoidCallback? onLeftTap;
+  final VoidCallback? onRightTap; // New callback for right icon
   final List<String> recentSearches;
   final ValueChanged<String>? onRecentSelected;
   final ValueChanged<String>? onRecentDelete;
   final Function(String)? onSubmitted;
   final Function(String)? onSearch;
+  final bool showSearchBar; // Toggle for search bar
   final String? backgroundImage;
-
 
   const SearchAppBar({
     Key? key,
     required this.title,
+    this.leftIcon, // Made optional
+    this.rightIcon, // Made optional
+    this.onLeftTap, // Made optional
+    this.onRightTap, // New optional callback
     this.leftWidget,
     this.rightWidget,
-    this.onLeftTap,
     this.recentSearches = const [],
     this.onRecentSelected,
     this.onRecentDelete,
     this.onSubmitted,
     this.onSearch,
-    this.backgroundImage
+    this.showSearchBar = true, // Default: show search bar
+    this.backgroundImage,
   }) : super(key: key);
 
   @override
   State<SearchAppBar> createState() => _SearchAppBarState();
 
   @override
-  Size get preferredSize => const Size.fromHeight(140);
+  Size get preferredSize =>
+      Size.fromHeight(showSearchBar ? 140 : kToolbarHeight);
 }
 
 class _SearchAppBarState extends State<SearchAppBar> {
@@ -68,11 +76,17 @@ class _SearchAppBarState extends State<SearchAppBar> {
             ),
           )
               : null,
-          leading: widget.leftWidget ??
-              IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
+          leading: widget.leftIcon != null
+              ? IconButton(
+            icon: Icon(widget.leftIcon,
+                color: Colors.white),
+            onPressed: widget.onLeftTap,
+          )
+              : widget.leftWidget ?? IconButton(
+            icon: const Icon(Icons.arrow_back,
+                color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
           title: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
@@ -85,49 +99,71 @@ class _SearchAppBarState extends State<SearchAppBar> {
             ),
           ),
           centerTitle: true,
-          actions: widget.rightWidget != null ? [widget.rightWidget!] : [],
+          actions: widget.rightIcon != null
+              ? [
+            IconButton(
+              icon: Icon(widget.rightIcon,
+                  color: widget.backgroundImage != null ? Colors.white : (isDarkMode ? Colors.white : Colors.black)),
+              onPressed: widget.onRightTap,
+            ),
+          ]
+              : widget.rightWidget != null ? [widget.rightWidget!] : [],
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
-          child: Directionality(
-            textDirection: TextDirection.rtl,
-            child: TextField(
-              key: _searchFieldKey,
-              controller: _searchController,
-              onTap: _handleSearchTap,
-              onChanged: (value) {
-                setState(() {});
-                _removeRecentOverlay();
-                widget.onSearch?.call(value);
-              },
-              onSubmitted: (query) {
-                _removeRecentOverlay();
-                widget.onSubmitted?.call(query);
-              },
-              decoration: InputDecoration(
-                hintText: "بحث...",
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {});
-                          _removeRecentOverlay();
-                          widget.onSearch?.call('');
-                        },
-                      )
-                    : null,
-                filled: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
+        if (widget.showSearchBar)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Theme(
+                data: ThemeData(
+                  textSelectionTheme: TextSelectionThemeData(
+                    cursorColor: isDarkMode ? Colors.white : Colors.black,
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                child: TextField(
+                  key: _searchFieldKey,
+                  controller: _searchController,
+                  onTap: _handleSearchTap,
+                  onChanged: (value) {
+                    setState(() {});
+                    _removeRecentOverlay();
+                    widget.onSearch?.call(value);
+                  },
+                  onSubmitted: (query) {
+                    _removeRecentOverlay();
+                    widget.onSubmitted?.call(query);
+                  },
+                  decoration: InputDecoration(
+                    hintText: "بحث...",
+                    hintStyle: TextStyle(
+                      color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                    prefixIcon: Icon(Icons.search,
+                        color: isDarkMode ? Colors.white : Colors.black54),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                      icon: Icon(Icons.clear, color: isDarkMode ? Colors.white : Colors.black54),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {});
+                        _removeRecentOverlay();
+                        widget.onSearch?.call('');
+                      },
+                    )
+                        : null,
+                    filled: true,
+                    fillColor: isDarkMode ? Colors.grey[900] : Colors.grey[200],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  ),
+                  style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                ),
               ),
             ),
           ),
-        ),
       ],
     );
   }

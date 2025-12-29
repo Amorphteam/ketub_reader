@@ -63,7 +63,7 @@ class _SearchScreenState extends State<SearchScreen> {
         appBar: SearchAppBar(
           title: widget.title,
           backgroundImage: widget.appBarbackground,
-          leftWidget: buildLeftWidget(context),
+          leftIcon: Icons.tune_rounded,
           recentSearches: _recentSearches,
           onRecentSelected: _onRecentSearchSelected,
           onRecentDelete: _onRecentSearchDeleted,
@@ -158,15 +158,6 @@ class _SearchScreenState extends State<SearchScreen> {
     _removeRecentSearch(term);
   }
 
-  Widget buildLeftWidget(BuildContext context) {
-    return IconButton(
-      onPressed: () async {
-        openBookSelectionSheet(allBooks);
-        _cubit.resetState();
-      },
-      icon: const Icon(Icons.tune_rounded),
-    );
-  }
 
   void openBookSelectionSheet(List<Book> books) async {
     final selectedBooks = await showModalBottomSheet<Map<String, bool>>(
