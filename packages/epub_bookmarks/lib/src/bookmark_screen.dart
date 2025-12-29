@@ -25,6 +25,7 @@ class BookmarkScreen extends StatefulWidget {
     this.clearDialogContent,
     this.clearDialogCancelText,
     this.clearDialogConfirmText,
+    this.appBarbackground,
   });
 
   final BookmarkPersistence persistence;
@@ -39,6 +40,7 @@ class BookmarkScreen extends StatefulWidget {
   final String? clearDialogContent;
   final String? clearDialogCancelText;
   final String? clearDialogConfirmText;
+  final String? appBarbackground;
 
   @override
   State<BookmarkScreen> createState() => _BookmarkScreenState();
@@ -51,9 +53,10 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (context) => BookmarkCubit(persistence: widget.persistence),
-    child: Scaffold(
-      appBar: widget.appBar ?? _buildDefaultAppBar(),
-      body: Directionality(
+    child: Builder(
+      builder: (blocContext) => Scaffold(
+        appBar: widget.appBar ?? _buildDefaultAppBar(blocContext),
+        body: Directionality(
         textDirection: TextDirection.rtl,
         child: BlocListener<BookmarkCubit, BookmarkState>(
           listener: (context, state) {
@@ -150,12 +153,17 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
           ),
         ),
       ),
+      ),
     ),
   );
 
-  PreferredSizeWidget _buildDefaultAppBar() {
+  PreferredSizeWidget _buildDefaultAppBar(BuildContext context) {
     return BookmarkAppBar(
-      title: 'الإشارات',
+    showSearchBar: false,
+    backgroundImage: widget.appBarbackground,
+    title: 'الإشارات',
+    leftIcon: Icons.delete,
+    onLeftTap: () => context.read<BookmarkCubit>().showClearDialog(),
     );
   }
 

@@ -13,6 +13,8 @@ class SearchAppBar extends StatefulWidget implements PreferredSizeWidget {
   final ValueChanged<String>? onRecentDelete;
   final Function(String)? onSubmitted;
   final Function(String)? onSearch;
+  final String? backgroundImage;
+
 
   const SearchAppBar({
     Key? key,
@@ -25,6 +27,7 @@ class SearchAppBar extends StatefulWidget implements PreferredSizeWidget {
     this.onRecentDelete,
     this.onSubmitted,
     this.onSearch,
+    this.backgroundImage
   }) : super(key: key);
 
   @override
@@ -41,11 +44,30 @@ class _SearchAppBarState extends State<SearchAppBar> {
 
   @override
   Widget build(BuildContext context) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         AppBar(
           elevation: 0,
+          backgroundColor: widget.backgroundImage != null ? Colors.transparent : null,
+          flexibleSpace: widget.backgroundImage != null
+              ? Container(
+            height: kToolbarHeight + MediaQuery.of(context).padding.top,
+            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage(widget.backgroundImage!),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.black.withOpacity(0.3),
+                  BlendMode.darken,
+                ),
+              ),
+            ),
+          )
+              : null,
           leading: widget.leftWidget ??
               IconButton(
                 icon: const Icon(Icons.arrow_back),
@@ -55,7 +77,11 @@ class _SearchAppBarState extends State<SearchAppBar> {
             padding: const EdgeInsets.all(8.0),
             child: Text(
               widget.title,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: TextStyle(
+                color: widget.backgroundImage != null ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                fontSize: 18,
+                fontWeight: FontWeight.normal,
+              ),
             ),
           ),
           centerTitle: true,

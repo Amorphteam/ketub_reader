@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'interfaces.dart';
 import 'models/search_persistence.dart';
-import 'search_app_bar.dart';
+import 'widgets/search_app_bar.dart';
 import 'widgets/book_selection_sheet.dart';
 import 'widgets/search_results_widget.dart';
 import 'cubit/search_cubit.dart';
@@ -14,6 +14,7 @@ class SearchScreen extends StatefulWidget {
     Key? key,
     required this.persistence,
     this.onResultTap,
+    this.appBarbackground,
     this.title = "البحث العام",
     this.assetPathPrefix = 'assets/epub/',
   }) : super(key: key);
@@ -22,6 +23,7 @@ class SearchScreen extends StatefulWidget {
   final OnSearchResultTap? onResultTap;
   final String title;
   final String assetPathPrefix;
+  final String? appBarbackground;
 
   @override
   _SearchScreenState createState() => _SearchScreenState();
@@ -60,6 +62,7 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
         appBar: SearchAppBar(
           title: widget.title,
+          backgroundImage: widget.appBarbackground,
           leftWidget: buildLeftWidget(context),
           recentSearches: _recentSearches,
           onRecentSelected: _onRecentSearchSelected,
