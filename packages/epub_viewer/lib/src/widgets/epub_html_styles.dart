@@ -18,6 +18,13 @@ class EpubHtmlStyles {
           textDecoration: TextDecoration.none,
           backgroundColor: backgroundColor,
         ),
+        '.space': Style(
+          textAlign: TextAlign.justify,
+          margin: Margins.only(bottom: 10),
+          fontSize: FontSize(fontSize?.size ?? FontSizeCustom.medium.size),
+          fontFamily: 'islam',
+          padding: HtmlPaddings.only(right: 7),
+        ),
         '.inline': Style(),
         'p': Style(
           color: _resolveColor(
