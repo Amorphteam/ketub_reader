@@ -29,6 +29,9 @@ class _BookSelectionSheetWidgetState extends State<BookSelectionSheetWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Container(
       decoration: const BoxDecoration(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -50,6 +53,9 @@ class _BookSelectionSheetWidgetState extends State<BookSelectionSheetWidget> {
                     selectedBooks.updateAll((key, value) => !allSelected);
                   });
                 },
+                style: TextButton.styleFrom(
+                  foregroundColor: colorScheme.primary,
+                ),
                 child: Text(
                   selectedBooks.values.every((value) => value)
                       ? "إلغاء الكل"
@@ -73,11 +79,10 @@ class _BookSelectionSheetWidgetState extends State<BookSelectionSheetWidget> {
             onPressed: () {
               Navigator.pop(context, selectedBooks);
             },
-            style: ElevatedButton.styleFrom(
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 52.0),
+              child: const Text("موافق"),
             ),
-            child: const Text("موافق"),
           ),
         ],
       ),
@@ -85,6 +90,9 @@ class _BookSelectionSheetWidgetState extends State<BookSelectionSheetWidget> {
   }
 
   Widget _buildBookTile(Book book) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     if (book.series == null || book.series!.isEmpty) {
       return ListTile(
         leading: Checkbox(
@@ -94,6 +102,8 @@ class _BookSelectionSheetWidgetState extends State<BookSelectionSheetWidget> {
               selectedBooks[book.epub] = value ?? false;
             });
           },
+          activeColor: colorScheme.primary,
+          checkColor: colorScheme.onPrimary,
         ),
         title: Text(book.title ?? "Untitled Book"),
       );
@@ -112,6 +122,8 @@ class _BookSelectionSheetWidgetState extends State<BookSelectionSheetWidget> {
                   }
                 });
               },
+              activeColor: colorScheme.primary,
+              checkColor: colorScheme.onPrimary,
             ),
             Text(book.title ?? "Untitled Book"),
           ],
@@ -132,6 +144,8 @@ class _BookSelectionSheetWidgetState extends State<BookSelectionSheetWidget> {
                           selectedBooks[book.epub] = allSelected;
                         });
                       },
+                      activeColor: colorScheme.primary,
+                      checkColor: colorScheme.onPrimary,
                     ),
                     Text(series.title ?? "Untitled Series"),
                   ],
