@@ -54,7 +54,7 @@ class _BookSelectionSheetWidgetState extends State<BookSelectionSheetWidget> {
                   });
                 },
                 style: TextButton.styleFrom(
-                  foregroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.surface,
                 ),
                 child: Text(
                   selectedBooks.values.every((value) => value)
@@ -102,8 +102,7 @@ class _BookSelectionSheetWidgetState extends State<BookSelectionSheetWidget> {
               selectedBooks[book.epub] = value ?? false;
             });
           },
-          activeColor: colorScheme.primary,
-          checkColor: colorScheme.onPrimary,
+
         ),
         title: Text(book.title ?? "Untitled Book"),
       );
@@ -122,8 +121,6 @@ class _BookSelectionSheetWidgetState extends State<BookSelectionSheetWidget> {
                   }
                 });
               },
-              activeColor: colorScheme.primary,
-              checkColor: colorScheme.onPrimary,
             ),
             Text(book.title ?? "Untitled Book"),
           ],
@@ -144,8 +141,6 @@ class _BookSelectionSheetWidgetState extends State<BookSelectionSheetWidget> {
                           selectedBooks[book.epub] = allSelected;
                         });
                       },
-                      activeColor: colorScheme.primary,
-                      checkColor: colorScheme.onPrimary,
                     ),
                     Text(series.title ?? "Untitled Series"),
                   ],
