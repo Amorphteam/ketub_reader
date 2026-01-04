@@ -219,7 +219,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
       listener: _handleStateChanges,
       builder: (context, state) {
         final cubit = context.read<EpubViewerCubit>();
-        final stateData = EpubViewerStateExtractor.extract(state, cubit);
+        final stateData = EpubViewerStateExtractor.extract(state, cubit, isDarkMode: isDarkMode);
         _updateSystemUI(cubit.isSliderVisible);
 
         return Scaffold(

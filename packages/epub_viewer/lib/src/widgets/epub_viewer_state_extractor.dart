@@ -7,7 +7,7 @@ import '../cubit/epub_viewer_cubit.dart';
 
 /// Extracts state data from EpubViewerState, with fallback to cubit cached values
 class EpubViewerStateExtractor {
-  static EpubViewerStateData extract(EpubViewerState state, EpubViewerCubit? cubit) {
+  static EpubViewerStateData extract(EpubViewerState state, EpubViewerCubit? cubit, {bool isDarkMode = false}) {
     final content = state.maybeWhen(
       loaded: (content, _, __) => content,
       contentHighlighted: (content, _, __) => content,
@@ -75,6 +75,30 @@ class EpubViewerStateExtractor {
       orElse: () {},
     );
 
+    // Determine background color with dark mode override
+    // In dark mode, force dark background (0xFF1B1B1B) unless user explicitly chose dark
+    // This ensures dark mode always defaults to dark, but respects user's menu choice
+    const darkBackgroundColor = Color(0xFF1B1B1B);
+    final Color backgroundColor;
+    
+    // Get the candidate color (from state or cached)
+    final Color? candidateColor = tempBackgroundColor ?? cubit?.cachedBackgroundColor;
+    
+    if (isDarkMode) {
+      // In dark mode: force dark background if candidate is not already dark
+      // This handles the case where cached/preferences have light colors
+      if (candidateColor != null && candidateColor.value == darkBackgroundColor.value) {
+        // User explicitly chose dark from menu - use it
+        backgroundColor = candidateColor;
+      } else {
+        // Force dark in dark mode (overrides light colors from cache/preferences)
+        backgroundColor = darkBackgroundColor;
+      }
+    } else {
+      // Light mode: use candidate color or default to white
+      backgroundColor = candidateColor ?? const Color(0xFFFFFFFF);
+    }
+
     return EpubViewerStateData(
       content: content,
       bookTitle: bookTitle,
@@ -85,7 +109,7 @@ class EpubViewerStateExtractor {
       fontSize: tempFontSize ?? cubit?.cachedFontSize ?? FontSizeCustom.medium,
       lineHeight: tempLineHeight ?? cubit?.cachedLineHeight ?? LineHeightCustom.medium,
       fontFamily: tempFontFamily ?? cubit?.cachedFontFamily ?? FontFamily.font1,
-      backgroundColor: tempBackgroundColor ?? cubit?.cachedBackgroundColor ?? const Color(0xFFFFFFFF),
+      backgroundColor: backgroundColor,
       useUniformTextColor: tempUseUniformTextColor ?? cubit?.useUniformTextColor ?? false,
       uniformTextColor: tempUniformTextColor ?? cubit?.cachedUniformTextColor ?? const Color(0xFF000000),
       hideArabicDiacritics: tempHideArabicDiacritics ?? cubit?.hideArabicDiacritics ?? false,
