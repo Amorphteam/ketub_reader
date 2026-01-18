@@ -15,6 +15,7 @@ class EpubHtmlContent extends StatelessWidget {
   final Color backgroundColor;
   final Color? uniformTextColor;
   final void Function(BuildContext context, String anchorId)? onAnchorIdTap;
+  final Map<String, Style>? customStyle;
 
   const EpubHtmlContent({
     super.key,
@@ -27,6 +28,7 @@ class EpubHtmlContent extends StatelessWidget {
     required this.backgroundColor,
     this.uniformTextColor,
     this.onAnchorIdTap,
+    this.customStyle,
   });
 
   @override
@@ -45,6 +47,7 @@ class EpubHtmlContent extends StatelessWidget {
         isDarkMode: isDarkMode,
         backgroundColor: backgroundColor,
         uniformTextColor: uniformTextColor,
+        customStyle: customStyle,
       ),
     );
   }

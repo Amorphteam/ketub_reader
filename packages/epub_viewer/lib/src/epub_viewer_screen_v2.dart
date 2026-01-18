@@ -28,6 +28,7 @@ class EpubViewerScreenV2 extends StatefulWidget {
     this.onBookmarksChanged,
     this.onAnchorIdTap,
     this.onTranslatePressed,
+    this.customStyle,
   });
 
   final EpubViewerEntryData entryData;
@@ -41,6 +42,7 @@ class EpubViewerScreenV2 extends StatefulWidget {
     required String? bookName,
     required String? bookPath,
   })? onTranslatePressed;
+  final Map<String, Style>? customStyle;
 
   @override
   _EpubViewerScreenV2State createState() => _EpubViewerScreenV2State();
@@ -583,6 +585,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
             uniformTextColor: stateData.uniformTextColor,
             styleSignature: styleSignature,
             onAnchorIdTap: widget.onAnchorIdTap,
+            customStyle: widget.customStyle,
           ),
         ),
         Padding(

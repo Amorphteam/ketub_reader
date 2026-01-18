@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:flutter_html/flutter_html.dart';
 import '../models/style_model.dart';
 import 'epub_html_content.dart';
 
@@ -21,6 +22,7 @@ class EpubContentList extends StatelessWidget {
   final Color uniformTextColor;
   final String styleSignature;
   final void Function(BuildContext context, String anchorId)? onAnchorIdTap;
+  final Map<String, Style>? customStyle;
 
   const EpubContentList({
     super.key,
@@ -41,6 +43,7 @@ class EpubContentList extends StatelessWidget {
     required this.uniformTextColor,
     required this.styleSignature,
     this.onAnchorIdTap,
+    this.customStyle,
   });
 
   @override
@@ -85,6 +88,7 @@ class EpubContentList extends StatelessWidget {
               uniformTextColor: useUniformTextColor ? uniformTextColor : null,
               anchorKey: isCurrentPage ? currentPageKey : null,
               onAnchorIdTap: onAnchorIdTap,
+              customStyle: customStyle,
             ),
           ),
         ),

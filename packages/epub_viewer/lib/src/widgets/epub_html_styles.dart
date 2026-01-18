@@ -10,7 +10,9 @@ class EpubHtmlStyles {
     required bool isDarkMode,
     required Color backgroundColor,
     Color? uniformTextColor,
-  }) => {
+    Map<String, Style>? customStyle,
+  }) {
+    final defaultStyles = {
         'body': Style(
           direction: TextDirection.rtl,
           textAlign: TextAlign.justify,
@@ -324,6 +326,14 @@ class EpubHtmlStyles {
         ),
         'mark': Style(backgroundColor: Colors.yellow),
       };
+
+    // If customStyle is provided, merge it with default styles (custom styles override defaults)
+    if (customStyle != null && customStyle.isNotEmpty) {
+      return {...defaultStyles, ...customStyle};
+    }
+    
+    return defaultStyles;
+  }
 
   static Color _resolveColor({
     required bool isDarkMode,
