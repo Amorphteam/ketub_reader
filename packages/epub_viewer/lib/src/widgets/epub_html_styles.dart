@@ -2,6 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import '../models/style_model.dart';
 
+/// Type definition for a custom style builder function.
+/// 
+/// This function receives the current dynamic style parameters and returns
+/// a map of CSS selectors to Style objects. This allows custom styles to
+/// use dynamic values like user-selected font size, colors, etc.
+typedef CustomStyleBuilder = Map<String, Style>? Function({
+  required FontSizeCustom fontSize,
+  required LineHeightCustom lineHeight,
+  required FontFamily fontFamily,
+  required bool isDarkMode,
+  required Color backgroundColor,
+  Color? uniformTextColor,
+});
+
 class EpubHtmlStyles {
   static Map<String, Style> getStyles({
     required FontSizeCustom fontSize,
@@ -11,6 +25,7 @@ class EpubHtmlStyles {
     required Color backgroundColor,
     Color? uniformTextColor,
     Map<String, Style>? customStyle,
+    CustomStyleBuilder? customStyleBuilder,
   }) {
     final defaultStyles = {
         'body': Style(
@@ -327,9 +342,24 @@ class EpubHtmlStyles {
         'mark': Style(backgroundColor: Colors.yellow),
       };
 
+    // If customStyleBuilder is provided, use it to build dynamic custom styles
+    Map<String, Style>? dynamicCustomStyle;
+    if (customStyleBuilder != null) {
+      dynamicCustomStyle = customStyleBuilder(
+        fontSize: fontSize,
+        lineHeight: lineHeight,
+        fontFamily: fontFamily,
+        isDarkMode: isDarkMode,
+        backgroundColor: backgroundColor,
+        uniformTextColor: uniformTextColor,
+      );
+    }
+    
     // If customStyle is provided, merge it with default styles (custom styles override defaults)
-    if (customStyle != null && customStyle.isNotEmpty) {
-      return {...defaultStyles, ...customStyle};
+    // customStyleBuilder takes precedence over static customStyle
+    final effectiveCustomStyle = dynamicCustomStyle ?? customStyle;
+    if (effectiveCustomStyle != null && effectiveCustomStyle.isNotEmpty) {
+      return {...defaultStyles, ...effectiveCustomStyle};
     }
     
     return defaultStyles;

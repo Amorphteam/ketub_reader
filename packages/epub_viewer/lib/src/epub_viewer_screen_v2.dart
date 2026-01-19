@@ -20,6 +20,8 @@ import 'widgets/search_navigation_buttons.dart';
 import 'widgets/style_sheet.dart';
 import 'widgets/toc_tree_list_widget.dart';
 
+export 'widgets/epub_content_list.dart' show CustomStyleBuilder;
+
 class EpubViewerScreenV2 extends StatefulWidget {
   const EpubViewerScreenV2({
     super.key,
@@ -29,6 +31,7 @@ class EpubViewerScreenV2 extends StatefulWidget {
     this.onAnchorIdTap,
     this.onTranslatePressed,
     this.customStyle,
+    this.customStyleBuilder,
   });
 
   final EpubViewerEntryData entryData;
@@ -43,6 +46,7 @@ class EpubViewerScreenV2 extends StatefulWidget {
     required String? bookPath,
   })? onTranslatePressed;
   final Map<String, Style>? customStyle;
+  final CustomStyleBuilder? customStyleBuilder;
 
   @override
   _EpubViewerScreenV2State createState() => _EpubViewerScreenV2State();
@@ -586,6 +590,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
             styleSignature: styleSignature,
             onAnchorIdTap: widget.onAnchorIdTap,
             customStyle: widget.customStyle,
+            customStyleBuilder: widget.customStyleBuilder,
           ),
         ),
         Padding(

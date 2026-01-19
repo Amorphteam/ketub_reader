@@ -4,6 +4,8 @@ import 'package:flutter_html/flutter_html.dart';
 import '../models/style_model.dart';
 import 'epub_html_content.dart';
 
+export 'epub_html_content.dart' show CustomStyleBuilder;
+
 class EpubContentList extends StatelessWidget {
   final List<String> content;
   final ItemScrollController itemScrollController;
@@ -23,6 +25,7 @@ class EpubContentList extends StatelessWidget {
   final String styleSignature;
   final void Function(BuildContext context, String anchorId)? onAnchorIdTap;
   final Map<String, Style>? customStyle;
+  final CustomStyleBuilder? customStyleBuilder;
 
   const EpubContentList({
     super.key,
@@ -44,6 +47,7 @@ class EpubContentList extends StatelessWidget {
     required this.styleSignature,
     this.onAnchorIdTap,
     this.customStyle,
+    this.customStyleBuilder,
   });
 
   @override
@@ -89,6 +93,7 @@ class EpubContentList extends StatelessWidget {
               anchorKey: isCurrentPage ? currentPageKey : null,
               onAnchorIdTap: onAnchorIdTap,
               customStyle: customStyle,
+              customStyleBuilder: customStyleBuilder,
             ),
           ),
         ),

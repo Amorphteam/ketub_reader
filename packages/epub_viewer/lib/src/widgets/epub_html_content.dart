@@ -5,6 +5,8 @@ import 'package:html/dom.dart' as dom;
 import '../models/style_model.dart';
 import 'epub_html_styles.dart';
 
+export 'epub_html_styles.dart' show CustomStyleBuilder;
+
 class EpubHtmlContent extends StatelessWidget {
   final String content;
   final FontSizeCustom fontSize;
@@ -16,6 +18,7 @@ class EpubHtmlContent extends StatelessWidget {
   final Color? uniformTextColor;
   final void Function(BuildContext context, String anchorId)? onAnchorIdTap;
   final Map<String, Style>? customStyle;
+  final CustomStyleBuilder? customStyleBuilder;
 
   const EpubHtmlContent({
     super.key,
@@ -29,6 +32,7 @@ class EpubHtmlContent extends StatelessWidget {
     this.uniformTextColor,
     this.onAnchorIdTap,
     this.customStyle,
+    this.customStyleBuilder,
   });
 
   @override
@@ -48,6 +52,7 @@ class EpubHtmlContent extends StatelessWidget {
         backgroundColor: backgroundColor,
         uniformTextColor: uniformTextColor,
         customStyle: customStyle,
+        customStyleBuilder: customStyleBuilder,
       ),
     );
   }

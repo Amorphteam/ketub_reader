@@ -7,4 +7,5 @@ export 'src/models/epub_viewer_persistence.dart';
 export 'src/models/search_model.dart';
 export 'src/models/style_model.dart';
 export 'src/helper/search_service.dart';
+export 'src/widgets/epub_html_styles.dart' show CustomStyleBuilder;
 
