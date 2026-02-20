@@ -67,7 +67,7 @@ class EpubPageSlider extends StatelessWidget {
   Widget _buildPageInfo(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(
-          right: 16.0, left: 16.0, bottom: 20.0, top: 0.0),
+          right: 16.0, left: 16.0, bottom: 0.0, top: 0.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

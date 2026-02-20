@@ -266,11 +266,13 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
                       : null,
                 )
               : null,
-          body: Stack(
-            children: [
-              _buildContentArea(context, state, stateData, isDarkMode),
-              _buildSearchNavigation(stateData),
-            ],
+          body: SafeArea(
+            child: Stack(
+              children: [
+                _buildContentArea(context, state, stateData, isDarkMode),
+                _buildSearchNavigation(stateData),
+              ],
+            ),
           ),
         );
       },
