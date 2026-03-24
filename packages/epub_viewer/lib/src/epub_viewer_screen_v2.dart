@@ -27,15 +27,20 @@ class EpubViewerScreenV2 extends StatefulWidget {
     super.key,
     required this.entryData,
     this.enableContentCache = true,
+    this.showBottomBar = true,
     this.onBookmarksChanged,
     this.onAnchorIdTap,
-    this.onTranslatePressed,
+    this.onExtraActionPressed,
+    this.extraActionIcon,
     this.customStyle,
     this.customStyleBuilder,
   });
 
   final EpubViewerEntryData entryData;
   final bool enableContentCache;
+  /// When true, shows the bottom bar (page slider). When false, hides it.
+  /// Defaults to true.
+  final bool showBottomBar;
   final Future<void> Function()? onBookmarksChanged;
   final void Function(BuildContext context, String anchorId)? onAnchorIdTap;
   final void Function(
@@ -44,7 +49,10 @@ class EpubViewerScreenV2 extends StatefulWidget {
     required String? sectionName,
     required String? bookName,
     required String? bookPath,
-  })? onTranslatePressed;
+  })? onExtraActionPressed;
+  /// Custom icon for the extra action button (e.g. translate, audio).
+  /// When null, defaults to translate icon.
+  final IconData? extraActionIcon;
   final Map<String, Style>? customStyle;
   final CustomStyleBuilder? customStyleBuilder;
 
@@ -260,16 +268,23 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
                   onStylePressed: () => _showStyleBottomSheet(context, cubit, stateData),
                   onBookmarkPressed: () => _handleBookmarkToggle(context, cubit),
                   onTocPressed: () => _showTocBottomSheet(context, cubit, isDarkMode),
-                  showTranslateButton: widget.onTranslatePressed != null,
-                  onTranslatePressed: widget.onTranslatePressed != null
-                      ? () => _handleTranslatePressed(context, stateData)
+                  showExtraActionButton: widget.onExtraActionPressed != null,
+                  onExtraActionPressed: widget.onExtraActionPressed != null
+                      ? () => _handleExtraActionPressed(context, stateData)
                       : null,
+                  extraActionIcon: widget.extraActionIcon,
                 )
               : null,
           body: SafeArea(
             child: Stack(
               children: [
-                _buildContentArea(context, state, stateData, isDarkMode),
+                _buildContentArea(
+                  context,
+                  state,
+                  stateData,
+                  isDarkMode,
+                  showBottomBar: widget.showBottomBar && cubit.isSliderVisible,
+                ),
                 _buildSearchNavigation(stateData),
               ],
             ),
@@ -506,8 +521,9 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
     BuildContext context,
     EpubViewerState state,
     EpubViewerStateData stateData,
-    bool isDarkMode,
-  ) {
+    bool isDarkMode, {
+    required bool showBottomBar,
+  }) {
     return Align(
       alignment: Alignment.topCenter,
       child: Container(
@@ -523,6 +539,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
             context,
             stateData,
             isDarkMode,
+            showBottomBar: showBottomBar,
           ),
         ),
       ),
@@ -532,8 +549,9 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
   Widget _buildContent(
     BuildContext context,
     EpubViewerStateData stateData,
-    bool isDarkMode,
-  ) {
+    bool isDarkMode, {
+    required bool showBottomBar,
+  }) {
     final cubit = context.read<EpubViewerCubit>();
     
     // Use cached content from cubit if current state doesn't have content
@@ -595,23 +613,24 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
             customStyleBuilder: widget.customStyleBuilder,
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 16.0),
-          child: EpubPageSlider(
-            currentPage: sliderValue,
-            maxPages: content.length.toDouble(),
-            bookTitle: bookTitle,
-            isAboutUsBook: cubit.isAboutUsBook,
-            onChanged: _handleSliderChanged,
-            onChangedEnd: defaultTargetPlatform == TargetPlatform.iOS
-                ? null
-                : _handleSliderChangeEnd,
-            onPageJump: () {
-              final cubit = context.read<EpubViewerCubit>();
-              _handlePageJump(context, cubit, content.length);
-            },
+        if (showBottomBar)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: EpubPageSlider(
+              currentPage: sliderValue,
+              maxPages: content.length.toDouble(),
+              bookTitle: bookTitle,
+              isAboutUsBook: cubit.isAboutUsBook,
+              onChanged: _handleSliderChanged,
+              onChangedEnd: defaultTargetPlatform == TargetPlatform.iOS
+                  ? null
+                  : _handleSliderChangeEnd,
+              onPageJump: () {
+                final cubit = context.read<EpubViewerCubit>();
+                _handlePageJump(context, cubit, content.length);
+              },
+            ),
           ),
-        ),
       ],
     );
   }
@@ -702,11 +721,11 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
     return stateData.searchResults;
   }
 
-  void _handleTranslatePressed(
+  void _handleExtraActionPressed(
     BuildContext context,
     EpubViewerStateData stateData,
   ) {
-    final callback = widget.onTranslatePressed;
+    final callback = widget.onExtraActionPressed;
     if (callback == null) return;
 
     final cubit = context.read<EpubViewerCubit>();
