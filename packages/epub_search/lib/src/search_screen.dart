@@ -8,6 +8,40 @@ import 'widgets/search_results_widget.dart';
 import 'cubit/search_cubit.dart';
 import 'cubit/search_state.dart';
 
+/// Callback to build a fully custom app bar.
+///
+/// The builder receives a [SearchAppBarConfig] object that exposes the current
+/// search UI state and actions (submit, open filter sheet, recent selections).
+typedef SearchAppBarBuilder = PreferredSizeWidget Function(
+  BuildContext context,
+  SearchAppBarConfig config,
+);
+
+/// Configuration passed to [SearchAppBarBuilder].
+class SearchAppBarConfig {
+  const SearchAppBarConfig({
+    required this.title,
+    required this.backgroundImage,
+    required this.showLeftSide,
+    required this.showRightSide,
+    required this.recentSearches,
+    required this.onOpenBookSelection,
+    required this.onSubmitted,
+    required this.onRecentSelected,
+    required this.onRecentDelete,
+  });
+
+  final String title;
+  final String? backgroundImage;
+  final bool showLeftSide;
+  final bool showRightSide;
+  final List<String> recentSearches;
+  final VoidCallback onOpenBookSelection;
+  final Future<void> Function(String query) onSubmitted;
+  final Future<void> Function(String term) onRecentSelected;
+  final void Function(String term) onRecentDelete;
+}
+
 /// Main search screen widget
 class SearchScreen extends StatefulWidget {
   const SearchScreen({
@@ -17,6 +51,10 @@ class SearchScreen extends StatefulWidget {
     this.appBarbackground,
     this.title = "البحث العام",
     this.assetPathPrefix = 'assets/epub/',
+    this.customAppBar,
+    this.customAppBarBuilder,
+    this.showLeftAppBarSide = true,
+    this.showRightAppBarSide = true,
   }) : super(key: key);
 
   final SearchPersistence persistence;
@@ -24,6 +62,10 @@ class SearchScreen extends StatefulWidget {
   final String title;
   final String assetPathPrefix;
   final String? appBarbackground;
+  final PreferredSizeWidget? customAppBar;
+  final SearchAppBarBuilder? customAppBarBuilder;
+  final bool showLeftAppBarSide;
+  final bool showRightAppBarSide;
 
   @override
   _SearchScreenState createState() => _SearchScreenState();
@@ -59,24 +101,38 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final appBarConfig = SearchAppBarConfig(
+      title: widget.title,
+      backgroundImage: widget.appBarbackground,
+      showLeftSide: widget.showLeftAppBarSide,
+      showRightSide: widget.showRightAppBarSide,
+      recentSearches: _recentSearches,
+      onOpenBookSelection: () {
+        openBookSelectionSheet(allBooks);
+        _cubit.resetState();
+      },
+      onSubmitted: _handleSubmitted,
+      onRecentSelected: _onRecentSearchSelected,
+      onRecentDelete: _onRecentSearchDeleted,
+    );
+
+    final defaultAppBar = SearchAppBar(
+      title: appBarConfig.title,
+      backgroundImage: appBarConfig.backgroundImage,
+      leftIcon: Icons.tune_rounded,
+      recentSearches: appBarConfig.recentSearches,
+      onRecentSelected: appBarConfig.onRecentSelected,
+      onRecentDelete: appBarConfig.onRecentDelete,
+      showLeftSide: appBarConfig.showLeftSide,
+      showRightSide: appBarConfig.showRightSide,
+      onLeftTap: appBarConfig.onOpenBookSelection,
+      onSubmitted: (query) => appBarConfig.onSubmitted(query),
+    );
+
     return Scaffold(
-        appBar: SearchAppBar(
-          title: widget.title,
-          backgroundImage: widget.appBarbackground,
-          leftIcon: Icons.tune_rounded,
-          recentSearches: _recentSearches,
-          onRecentSelected: _onRecentSearchSelected,
-          onRecentDelete: _onRecentSearchDeleted,
-          onLeftTap: () {
-            openBookSelectionSheet(allBooks);
-            _cubit.resetState();
-          },
-          onSubmitted: (query) async {
-            _currentSearchQuery = query;
-            await _upsertRecentSearch(query);
-            await _cubit.search(query, maxResultsPerBook: 10);
-          },
-        ),
+        appBar: widget.customAppBarBuilder?.call(context, appBarConfig) ??
+            widget.customAppBar ??
+            defaultAppBar,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(8.0),
@@ -156,6 +212,12 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _onRecentSearchDeleted(String term) {
     _removeRecentSearch(term);
+  }
+
+  Future<void> _handleSubmitted(String query) async {
+    _currentSearchQuery = query;
+    await _upsertRecentSearch(query);
+    await _cubit.search(query, maxResultsPerBook: 10);
   }
 
 

@@ -301,6 +301,88 @@ class _SearchExampleState extends State<_SearchExample> {
 | `onResultTap` | `OnSearchResultTap?` | ❌ No | `null` | Callback when user taps a search result |
 | `title` | `String` | ❌ No | `"البحث العام"` | Screen title |
 | `assetPathPrefix` | `String` | ❌ No | `'assets/epub/'` | Prefix path for EPUB files in assets |
+| `appBarbackground` | `String?` | ❌ No | `null` | Optional asset image used by the default app bar |
+| `showLeftAppBarSide` | `bool` | ❌ No | `true` | Show/hide left side of the default app bar |
+| `showRightAppBarSide` | `bool` | ❌ No | `true` | Show/hide right side of the default app bar |
+| `customAppBar` | `PreferredSizeWidget?` | ❌ No | `null` | Fully replace the package app bar with a static custom app bar |
+| `customAppBarBuilder` | `SearchAppBarBuilder?` | ❌ No | `null` | Fully custom app bar builder with access to search actions/state |
+
+## App Bar Customization
+
+You can customize the app bar in 3 levels:
+
+1. Use the package default app bar and only hide left/right sides.
+2. Pass a static custom app bar using `customAppBar`.
+3. Build a dynamic custom app bar using `customAppBarBuilder` (recommended for app-specific UI).
+
+Priority order inside `SearchScreen`:
+
+1. `customAppBarBuilder`
+2. `customAppBar`
+3. Default `SearchAppBar`
+
+### Option 1: Default app bar with side visibility
+
+```dart
+SearchScreen(
+  persistence: persistence,
+  showLeftAppBarSide: false,
+  showRightAppBarSide: true,
+)
+```
+
+### Option 2: Static custom app bar
+
+```dart
+SearchScreen(
+  persistence: persistence,
+  customAppBar: AppBar(
+    title: const Text('My Search'),
+  ),
+)
+```
+
+### Option 3: Dynamic custom app bar with package hooks
+
+`customAppBarBuilder` receives a `SearchAppBarConfig` object with:
+- `title`, `backgroundImage`
+- `showLeftSide`, `showRightSide`
+- `recentSearches`
+- `onOpenBookSelection()`
+- `onSubmitted(query)`
+- `onRecentSelected(term)`
+- `onRecentDelete(term)`
+
+```dart
+SearchScreen(
+  persistence: persistence,
+  customAppBarBuilder: (context, config) {
+    return AppBar(
+      title: Text(config.title),
+      leading: config.showLeftSide
+          ? IconButton(
+              icon: const Icon(Icons.tune),
+              onPressed: config.onOpenBookSelection,
+            )
+          : null,
+      actions: config.showRightSide
+          ? [
+              IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: () => config.onSubmitted('دعاء'),
+              ),
+            ]
+          : const [],
+    );
+  },
+)
+```
+
+## Migration Notes
+
+- If you already use `customAppBar`, no code changes are required.
+- Use `customAppBarBuilder` when you need app-bar UI that reacts to package state or calls package actions directly.
+- Keep using `showLeftAppBarSide` / `showRightAppBarSide` only when the default package app bar is used.
 
 ## SearchModel Fields
 
