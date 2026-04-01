@@ -101,6 +101,28 @@ BookmarkScreen(
 )
 ```
 
+You can also use a dynamic app bar builder:
+
+```dart
+BookmarkScreen(
+  persistence: persistence,
+  customAppBarBuilder: (context, config) {
+    return AppBar(
+      title: Text(config.title),
+      leading: config.showLeftSide
+          ? IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: config.onClearAllTap,
+            )
+          : null,
+      actions: config.showRightSide
+          ? [IconButton(icon: const Icon(Icons.more_vert), onPressed: () {})]
+          : const [],
+    );
+  },
+)
+```
+
 ## Customization
 
 All text strings are customizable:
@@ -118,6 +140,13 @@ BookmarkScreen(
   clearDialogConfirmText: 'Delete',
 )
 ```
+
+App bar customization options:
+
+- `appBar`: static custom app bar.
+- `customAppBarBuilder`: dynamic custom app bar with package hooks.
+- `showLeftAppBarSide` / `showRightAppBarSide`: show/hide default app bar sides.
+- `appBarbackground`: optional background image for default app bar.
 
 ## Architecture
 

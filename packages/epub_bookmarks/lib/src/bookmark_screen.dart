@@ -10,11 +10,33 @@ import 'widgets/bookmark_list_widget.dart';
 import 'widgets/history_list_widget.dart';
 import 'widgets/bookmark_app_bar.dart';
 
+typedef BookmarkAppBarBuilder = PreferredSizeWidget Function(
+  BuildContext context,
+  BookmarkAppBarConfig config,
+);
+
+class BookmarkAppBarConfig {
+  const BookmarkAppBarConfig({
+    required this.title,
+    required this.backgroundImage,
+    required this.showLeftSide,
+    required this.showRightSide,
+    required this.onClearAllTap,
+  });
+
+  final String title;
+  final String? backgroundImage;
+  final bool showLeftSide;
+  final bool showRightSide;
+  final VoidCallback onClearAllTap;
+}
+
 class BookmarkScreen extends StatefulWidget {
   const BookmarkScreen({
     super.key,
     required this.persistence,
     this.appBar,
+    this.customAppBarBuilder,
     this.onBookmarkTap,
     this.onHistoryTap,
     this.emptyBookmarkTitle,
@@ -26,10 +48,13 @@ class BookmarkScreen extends StatefulWidget {
     this.clearDialogCancelText,
     this.clearDialogConfirmText,
     this.appBarbackground,
+    this.showLeftAppBarSide = true,
+    this.showRightAppBarSide = true,
   });
 
   final BookmarkPersistence persistence;
   final PreferredSizeWidget? appBar;
+  final BookmarkAppBarBuilder? customAppBarBuilder;
   final Future<void> Function(BuildContext context, Bookmark bookmark)? onBookmarkTap;
   final Future<void> Function(BuildContext context, History history)? onHistoryTap;
   final String? emptyBookmarkTitle;
@@ -41,6 +66,8 @@ class BookmarkScreen extends StatefulWidget {
   final String? clearDialogCancelText;
   final String? clearDialogConfirmText;
   final String? appBarbackground;
+  final bool showLeftAppBarSide;
+  final bool showRightAppBarSide;
 
   @override
   State<BookmarkScreen> createState() => _BookmarkScreenState();
@@ -54,8 +81,19 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
   Widget build(BuildContext context) => BlocProvider(
     create: (context) => BookmarkCubit(persistence: widget.persistence),
     child: Builder(
-      builder: (blocContext) => Scaffold(
-        appBar: widget.appBar ?? _buildDefaultAppBar(blocContext),
+      builder: (blocContext) {
+        final appBarConfig = BookmarkAppBarConfig(
+          title: 'الإشارات',
+          backgroundImage: widget.appBarbackground,
+          showLeftSide: widget.showLeftAppBarSide,
+          showRightSide: widget.showRightAppBarSide,
+          onClearAllTap: () => blocContext.read<BookmarkCubit>().showClearDialog(),
+        );
+        final resolvedAppBar = widget.customAppBarBuilder?.call(blocContext, appBarConfig) ??
+            widget.appBar ??
+            _buildDefaultAppBar(blocContext, appBarConfig);
+        return Scaffold(
+        appBar: resolvedAppBar,
         body: Directionality(
         textDirection: TextDirection.rtl,
         child: BlocListener<BookmarkCubit, BookmarkState>(
@@ -153,17 +191,20 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
           ),
         ),
       ),
-      ),
+      );
+      },
     ),
   );
 
-  PreferredSizeWidget _buildDefaultAppBar(BuildContext context) {
+  PreferredSizeWidget _buildDefaultAppBar(BuildContext context, BookmarkAppBarConfig config) {
     return BookmarkAppBar(
-    showSearchBar: false,
-    backgroundImage: widget.appBarbackground,
-    title: 'الإشارات',
-    leftIcon: Icons.delete,
-    onLeftTap: () => context.read<BookmarkCubit>().showClearDialog(),
+      showSearchBar: false,
+      backgroundImage: config.backgroundImage,
+      title: config.title,
+      showLeftSide: config.showLeftSide,
+      showRightSide: config.showRightSide,
+      leftIcon: Icons.delete,
+      onLeftTap: config.onClearAllTap,
     );
   }
 

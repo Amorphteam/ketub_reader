@@ -8,6 +8,10 @@ class BookmarkAppBar extends StatefulWidget implements PreferredSizeWidget {
   final IconData? leftIcon;
   final Widget? leftWidget;
   final IconData? rightIcon;
+  final Widget? rightWidget;
+  final bool showLeftSide;
+  final bool showRightSide;
+  final bool showDefaultBackButton;
   final VoidCallback? onLeftTap;
   final VoidCallback? onRightTap; // New callback for right icon
   final Function(String)? onSearch; // Optional
@@ -20,6 +24,10 @@ class BookmarkAppBar extends StatefulWidget implements PreferredSizeWidget {
     required this.title,
     this.leftIcon, // Made optional
     this.rightIcon, // Made optional
+    this.rightWidget,
+    this.showLeftSide = true,
+    this.showRightSide = true,
+    this.showDefaultBackButton = true,
     this.onLeftTap, // Made optional
     this.onRightTap, // New optional callback
     this.onSearch, // Optional
@@ -66,17 +74,20 @@ class _BookmarkAppBarState extends State<BookmarkAppBar> {
             ),
           )
               : null,
-          leading: widget.leftIcon != null
-              ? IconButton(
-            icon: Icon(widget.leftIcon,
-                color: Colors.white),
-            onPressed: widget.onLeftTap,
-          )
-              : widget.leftWidget ?? IconButton(
-            icon: const Icon(Icons.arrow_back,
-                color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
+          leading: !widget.showLeftSide
+              ? null
+              : widget.leftIcon != null
+                  ? IconButton(
+                      icon: Icon(widget.leftIcon, color: Colors.white),
+                      onPressed: widget.onLeftTap,
+                    )
+                  : widget.leftWidget ??
+                      (widget.showDefaultBackButton
+                          ? IconButton(
+                              icon: const Icon(Icons.arrow_back, color: Colors.white),
+                              onPressed: () => Navigator.of(context).pop(),
+                            )
+                          : null),
           title: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
@@ -89,15 +100,23 @@ class _BookmarkAppBarState extends State<BookmarkAppBar> {
             ),
           ),
           centerTitle: true,
-          actions: widget.rightIcon != null
-              ? [
-            IconButton(
-              icon: Icon(widget.rightIcon,
-                  color: widget.backgroundImage != null ? Colors.white : (isDarkMode ? Colors.white : Colors.black)),
-              onPressed: widget.onRightTap,
-            ),
-          ]
-              : [],
+          actions: !widget.showRightSide
+              ? const []
+              : widget.rightIcon != null
+                  ? [
+                      IconButton(
+                        icon: Icon(
+                          widget.rightIcon,
+                          color: widget.backgroundImage != null
+                              ? Colors.white
+                              : (isDarkMode ? Colors.white : Colors.black),
+                        ),
+                        onPressed: widget.onRightTap,
+                      ),
+                    ]
+                  : widget.rightWidget != null
+                      ? [widget.rightWidget!]
+                      : const [],
         ),
         if (widget.showSearchBar)
           Padding(
