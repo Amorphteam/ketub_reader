@@ -7,6 +7,7 @@ import '../search_service.dart';
 import '../epub_helpers.dart';
 
 const int MAX_RESULTS_PER_BOOK = 10;
+const double TOC_BASE_FONT_SIZE = 18.0;
 
 class SearchResultsWidget extends StatefulWidget {
   const SearchResultsWidget({
@@ -421,7 +422,7 @@ class _SearchResultsWidgetState extends State<SearchResultsWidget> {
                       data: result.spanna ?? '',
                       style: {
                         'html': Style(
-                          fontSize: FontSize.medium,
+                          fontSize: FontSize(TOC_BASE_FONT_SIZE),
                           lineHeight: LineHeight(1.2),
                           textAlign: TextAlign.right,
                         ),

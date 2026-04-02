@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/bookmark_cubit.dart';
 import '../models/bookmark_models.dart';
 
+const double TOC_BASE_FONT_SIZE = 18.0;
+
 class BookmarkListWidget extends StatelessWidget {
   const BookmarkListWidget({
     super.key,
@@ -44,11 +46,13 @@ class BookmarkListWidget extends StatelessWidget {
                         onTap: () {
                           context.read<BookmarkCubit>().deleteBookmark(bookmark.id!);
                         },
-                        child: const CircleAvatar(
+                        child: CircleAvatar(
                           radius: 12,
+                          backgroundColor: Theme.of(context).colorScheme.primary,
                           child: Icon(
                             Icons.close_rounded,
                             size: 16,
+                            color: Theme.of(context).colorScheme.onPrimary,
                           ),
                         ),
                       ),
@@ -57,7 +61,10 @@ class BookmarkListWidget extends StatelessWidget {
                           padding: const EdgeInsets.all(16.0),
                           child: Text(
                             bookmark.title,
-                            style: Theme.of(context).textTheme.labelSmall,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(fontSize: TOC_BASE_FONT_SIZE),
                             textAlign: TextAlign.right,
                           ),
                         ),
@@ -132,11 +139,14 @@ class BookmarkListWidget extends StatelessWidget {
                             onTap: () {
                               context.read<BookmarkCubit>().deleteBookmark(bookmark.id!);
                             },
-                            child: const CircleAvatar(
+                            child: CircleAvatar(
                               radius: 12,
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
                               child: Icon(
                                 Icons.close_rounded,
                                 size: 16,
+                                color: Theme.of(context).colorScheme.onPrimary,
                               ),
                             ),
                           ),
@@ -147,7 +157,8 @@ class BookmarkListWidget extends StatelessWidget {
                                 bookmark.title,
                                 style: Theme.of(context)
                                     .textTheme
-                                    .labelSmall,
+                                    .titleLarge
+                                    ?.copyWith(fontSize: TOC_BASE_FONT_SIZE),
                                 textAlign: TextAlign.right,
                               ),
                             ),
