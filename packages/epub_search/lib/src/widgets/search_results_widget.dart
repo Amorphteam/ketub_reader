@@ -15,12 +15,14 @@ class SearchResultsWidget extends StatefulWidget {
     required this.searchQuery,
     this.onResultTap,
     this.assetPathPrefix = 'assets/epub/',
+    this.groupResultsByBookName = true,
   });
 
   final List<SearchModel> searchResults;
   final String searchQuery;
   final OnSearchResultTap? onResultTap;
   final String assetPathPrefix;
+  final bool groupResultsByBookName;
 
   @override
   _SearchResultsWidgetState createState() => _SearchResultsWidgetState();
@@ -171,6 +173,18 @@ class _SearchResultsWidgetState extends State<SearchResultsWidget> {
   @override
   Widget build(BuildContext context) {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    if (!widget.groupResultsByBookName) {
+      return ListView.builder(
+        itemCount: widget.searchResults.length,
+        itemBuilder: (context, index) {
+          final result = widget.searchResults[index];
+          return Column(
+            children: _buildResultList(result),
+          );
+        },
+      );
+    }
 
     return Column(
       children: [
@@ -377,33 +391,47 @@ class _SearchResultsWidgetState extends State<SearchResultsWidget> {
     );
   }
 
-  List<Widget> _buildResultList(SearchModel result) {
+  List<Widget> _buildResultList(SearchModel result, {bool showBookTitle = false}) {
     return [
       ListTile(
         title: GestureDetector(
           onTap: () {
             widget.onResultTap?.call(result);
           },
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                '${result.pageIndex}',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              Expanded(
-                child: Html(
-                  data: result.spanna ?? '',
-                  style: {
-                    'html': Style(
-                      fontSize: FontSize.medium,
-                      lineHeight: LineHeight(1.2),
-                      textAlign: TextAlign.right,
-                    ),
-                    'mark': Style(
-                      backgroundColor: Colors.yellow,
-                    ),
-                  },
+              if (showBookTitle && (result.bookTitle?.isNotEmpty ?? false))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    result.bookTitle!,
+                    textAlign: TextAlign.right,
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
                 ),
+              Row(
+                children: [
+                  Text(
+                    '${result.pageIndex}',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  Expanded(
+                    child: Html(
+                      data: result.spanna ?? '',
+                      style: {
+                        'html': Style(
+                          fontSize: FontSize.medium,
+                          lineHeight: LineHeight(1.2),
+                          textAlign: TextAlign.right,
+                        ),
+                        'mark': Style(
+                          backgroundColor: Colors.yellow,
+                        ),
+                      },
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

@@ -26,6 +26,7 @@ class BookmarkScreen extends StatefulWidget {
     this.clearDialogCancelText,
     this.clearDialogConfirmText,
     this.appBarbackground,
+    this.groupResultsByBookName = true,
   });
 
   final BookmarkPersistence persistence;
@@ -41,6 +42,7 @@ class BookmarkScreen extends StatefulWidget {
   final String? clearDialogCancelText;
   final String? clearDialogConfirmText;
   final String? appBarbackground;
+  final bool groupResultsByBookName;
 
   @override
   State<BookmarkScreen> createState() => _BookmarkScreenState();
@@ -214,6 +216,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
         }
         return BookmarkListWidget(
           bookmarkList: bookmarks,
+          groupResultsByBookName: widget.groupResultsByBookName,
           onBookmarkTap: (ctx, bookmark) async {
             context.read<BookmarkCubit>().openEpubFromBookmark(bookmark);
             // Navigation will be handled by BlocListener
@@ -233,6 +236,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
         }
         return HistoryListWidget(
           historyList: history,
+          groupResultsByBookName: widget.groupResultsByBookName,
           onHistoryTap: (ctx, history) async {
             context.read<BookmarkCubit>().openEpubFromHistory(history);
             // Navigation will be handled by BlocListener

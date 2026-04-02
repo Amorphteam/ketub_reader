@@ -55,6 +55,7 @@ class SearchScreen extends StatefulWidget {
     this.customAppBarBuilder,
     this.showLeftAppBarSide = true,
     this.showRightAppBarSide = true,
+    this.groupResultsByBookName = true,
   }) : super(key: key);
 
   final SearchPersistence persistence;
@@ -66,6 +67,7 @@ class SearchScreen extends StatefulWidget {
   final SearchAppBarBuilder? customAppBarBuilder;
   final bool showLeftAppBarSide;
   final bool showRightAppBarSide;
+  final bool groupResultsByBookName;
 
   @override
   _SearchScreenState createState() => _SearchScreenState();
@@ -174,6 +176,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     searchQuery: _currentSearchQuery,
                     onResultTap: widget.onResultTap,
                     assetPathPrefix: widget.assetPathPrefix,
+                    groupResultsByBookName: widget.groupResultsByBookName,
                   );
                 } else if (state is SearchLoadedList) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {

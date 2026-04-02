@@ -7,16 +7,79 @@ class BookmarkListWidget extends StatelessWidget {
   const BookmarkListWidget({
     super.key,
     required this.bookmarkList,
+    this.groupResultsByBookName = true,
     required this.onBookmarkTap,
     required this.onRefresh,
   });
 
   final List<Bookmark> bookmarkList;
+  final bool groupResultsByBookName;
   final Future<void> Function(BuildContext context, Bookmark bookmark) onBookmarkTap;
   final VoidCallback onRefresh;
 
   @override
   Widget build(BuildContext context) {
+    if (!groupResultsByBookName) {
+      return ListView.builder(
+        padding: const EdgeInsets.only(top: 16.0, right: 8.0, left: 8.0),
+        itemCount: bookmarkList.length,
+        itemBuilder: (context, index) {
+          final bookmark = bookmarkList[index];
+          final String stringValue = bookmark.pageIndex;
+          final double doubleValue = double.parse(stringValue);
+          final int intValue = doubleValue.toInt();
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    onBookmarkTap(context, bookmark);
+                    onRefresh();
+                  },
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          context.read<BookmarkCubit>().deleteBookmark(bookmark.id!);
+                        },
+                        child: const CircleAvatar(
+                          radius: 12,
+                          child: Icon(
+                            Icons.close_rounded,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                            bookmark.title,
+                            style: Theme.of(context).textTheme.labelSmall,
+                            textAlign: TextAlign.right,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        (intValue + 1).toString(),
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ],
+                  ),
+                ),
+                if (index < bookmarkList.length - 1)
+                  const Divider(
+                    height: 0.5,
+                  ),
+              ],
+            ),
+          );
+        },
+      );
+    }
+
     // Group the bookmarks by bookName
     final Map<String, List<Bookmark>> groupedBookmarks = {};
     for (final bookmark in bookmarkList) {
