@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/bookmark_cubit.dart';
 import '../models/bookmark_models.dart';
 
-const double TOC_BASE_FONT_SIZE = 18.0;
+const double _tocBaseFontSize = 18.0;
 
 class BookmarkListWidget extends StatelessWidget {
   const BookmarkListWidget({
@@ -64,7 +64,7 @@ class BookmarkListWidget extends StatelessWidget {
                             style: Theme.of(context)
                                 .textTheme
                                 .titleLarge
-                                ?.copyWith(fontSize: TOC_BASE_FONT_SIZE),
+                                ?.copyWith(fontSize: _tocBaseFontSize),
                             textAlign: TextAlign.right,
                           ),
                         ),
@@ -158,7 +158,7 @@ class BookmarkListWidget extends StatelessWidget {
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleLarge
-                                    ?.copyWith(fontSize: TOC_BASE_FONT_SIZE),
+                                    ?.copyWith(fontSize: _tocBaseFontSize),
                                 textAlign: TextAlign.right,
                               ),
                             ),
