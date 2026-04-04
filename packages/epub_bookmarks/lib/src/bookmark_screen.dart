@@ -51,6 +51,9 @@ class BookmarkScreen extends StatefulWidget {
     this.showLeftAppBarSide = true,
     this.showRightAppBarSide = true,
     this.groupResultsByBookName = true,
+    this.itemUseCard = false,
+    this.showItemPageNumber = true,
+    this.itemCardColor,
   });
 
   final BookmarkPersistence persistence;
@@ -70,6 +73,12 @@ class BookmarkScreen extends StatefulWidget {
   final bool showLeftAppBarSide;
   final bool showRightAppBarSide;
   final bool groupResultsByBookName;
+  /// Flat [Card] per bookmark/history row (no shadow). Applies to both tabs.
+  final bool itemUseCard;
+  /// When false, hides the page number on each row.
+  final bool showItemPageNumber;
+  /// Background for item cards when [itemUseCard] is true.
+  final Color? itemCardColor;
 
   @override
   State<BookmarkScreen> createState() => _BookmarkScreenState();
@@ -205,7 +214,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
       title: config.title,
       showLeftSide: config.showLeftSide,
       showRightSide: config.showRightSide,
-      leftIcon: Icons.delete,
+      leftIcon: Icons.close,
       onLeftTap: config.onClearAllTap,
     );
   }
@@ -258,6 +267,9 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
         return BookmarkListWidget(
           bookmarkList: bookmarks,
           groupResultsByBookName: widget.groupResultsByBookName,
+          itemUseCard: widget.itemUseCard,
+          showItemPageNumber: widget.showItemPageNumber,
+          itemCardColor: widget.itemCardColor,
           onBookmarkTap: (ctx, bookmark) async {
             context.read<BookmarkCubit>().openEpubFromBookmark(bookmark);
             // Navigation will be handled by BlocListener
@@ -278,6 +290,9 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
         return HistoryListWidget(
           historyList: history,
           groupResultsByBookName: widget.groupResultsByBookName,
+          itemUseCard: widget.itemUseCard,
+          showItemPageNumber: widget.showItemPageNumber,
+          itemCardColor: widget.itemCardColor,
           onHistoryTap: (ctx, history) async {
             context.read<BookmarkCubit>().openEpubFromHistory(history);
             // Navigation will be handled by BlocListener

@@ -56,6 +56,9 @@ class SearchScreen extends StatefulWidget {
     this.showLeftAppBarSide = true,
     this.showRightAppBarSide = true,
     this.groupResultsByBookName = true,
+    this.resultItemUseCard = false,
+    this.showResultPageNumber = true,
+    this.resultItemCardColor,
   }) : super(key: key);
 
   final SearchPersistence persistence;
@@ -68,6 +71,12 @@ class SearchScreen extends StatefulWidget {
   final bool showLeftAppBarSide;
   final bool showRightAppBarSide;
   final bool groupResultsByBookName;
+  /// When true, each hit is shown inside a [Card] instead of a [ListTile] + [Divider].
+  final bool resultItemUseCard;
+  /// When false, the page index is hidden for each result row.
+  final bool showResultPageNumber;
+  /// Background for each result [Card] when [resultItemUseCard] is true. Null uses theme default.
+  final Color? resultItemCardColor;
 
   @override
   _SearchScreenState createState() => _SearchScreenState();
@@ -177,6 +186,9 @@ class _SearchScreenState extends State<SearchScreen> {
                     onResultTap: widget.onResultTap,
                     assetPathPrefix: widget.assetPathPrefix,
                     groupResultsByBookName: widget.groupResultsByBookName,
+                    resultItemUseCard: widget.resultItemUseCard,
+                    showResultPageNumber: widget.showResultPageNumber,
+                    resultItemCardColor: widget.resultItemCardColor,
                   );
                 } else if (state is SearchLoadedList) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -210,7 +222,10 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() {
       _currentSearchQuery = term;
     });
-    await _cubit.search(term, maxResultsPerBook: 10);
+    await _cubit.search(
+      term,
+      maxResultsPerBook: widget.groupResultsByBookName ? 10 : null,
+    );
   }
 
   void _onRecentSearchDeleted(String term) {
@@ -220,7 +235,10 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _handleSubmitted(String query) async {
     _currentSearchQuery = query;
     await _upsertRecentSearch(query);
-    await _cubit.search(query, maxResultsPerBook: 10);
+    await _cubit.search(
+      query,
+      maxResultsPerBook: widget.groupResultsByBookName ? 10 : null,
+    );
   }
 
 

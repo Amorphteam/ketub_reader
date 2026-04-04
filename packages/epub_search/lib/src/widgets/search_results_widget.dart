@@ -17,6 +17,9 @@ class SearchResultsWidget extends StatefulWidget {
     this.onResultTap,
     this.assetPathPrefix = 'assets/epub/',
     this.groupResultsByBookName = true,
+    this.resultItemUseCard = false,
+    this.showResultPageNumber = true,
+    this.resultItemCardColor,
   });
 
   final List<SearchModel> searchResults;
@@ -24,6 +27,9 @@ class SearchResultsWidget extends StatefulWidget {
   final OnSearchResultTap? onResultTap;
   final String assetPathPrefix;
   final bool groupResultsByBookName;
+  final bool resultItemUseCard;
+  final bool showResultPageNumber;
+  final Color? resultItemCardColor;
 
   @override
   _SearchResultsWidgetState createState() => _SearchResultsWidgetState();
@@ -392,51 +398,83 @@ class _SearchResultsWidgetState extends State<SearchResultsWidget> {
     );
   }
 
-  List<Widget> _buildResultList(SearchModel result, {bool showBookTitle = false}) {
-    return [
-      ListTile(
-        title: GestureDetector(
-          onTap: () {
-            widget.onResultTap?.call(result);
-          },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+  Widget _resultSnippet(String? spanna) {
+    return Html(
+      data: spanna ?? '',
+      style: {
+        'html': Style(
+          fontSize: FontSize(TOC_BASE_FONT_SIZE),
+          lineHeight: LineHeight(1.2),
+          textAlign: TextAlign.right,
+        ),
+        'mark': Style(
+          backgroundColor: Colors.yellow,
+        ),
+      },
+    );
+  }
+
+  Widget _buildResultBody(SearchModel result, {bool showBookTitle = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        if (showBookTitle && (result.bookTitle?.isNotEmpty ?? false))
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              result.bookTitle!,
+              textAlign: TextAlign.right,
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+          ),
+        if (widget.showResultPageNumber)
+          Row(
             children: [
-              if (showBookTitle && (result.bookTitle?.isNotEmpty ?? false))
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    result.bookTitle!,
-                    textAlign: TextAlign.right,
-                    style: Theme.of(context).textTheme.labelMedium,
-                  ),
-                ),
-              Row(
-                children: [
-                  Text(
-                    '${result.pageIndex}',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  Expanded(
-                    child: Html(
-                      data: result.spanna ?? '',
-                      style: {
-                        'html': Style(
-                          fontSize: FontSize(TOC_BASE_FONT_SIZE),
-                          lineHeight: LineHeight(1.2),
-                          textAlign: TextAlign.right,
-                        ),
-                        'mark': Style(
-                          backgroundColor: Colors.yellow,
-                        ),
-                      },
-                    ),
-                  ),
-                ],
+              Text(
+                '${result.pageIndex}',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
+              Expanded(child: _resultSnippet(result.spanna)),
             ],
+          )
+        else
+          SizedBox(
+            width: double.infinity,
+            child: _resultSnippet(result.spanna),
+          ),
+      ],
+    );
+  }
+
+  List<Widget> _buildResultList(SearchModel result, {bool showBookTitle = false}) {
+    final body = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => widget.onResultTap?.call(result),
+      child: _buildResultBody(result, showBookTitle: showBookTitle),
+    );
+
+    if (widget.resultItemUseCard) {
+      return [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Card(
+            elevation: 0,
+            shadowColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+            color: widget.resultItemCardColor,
+            clipBehavior: Clip.antiAlias,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: body,
+            ),
           ),
         ),
+      ];
+    }
+
+    return [
+      ListTile(
+        title: body,
       ),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0),
