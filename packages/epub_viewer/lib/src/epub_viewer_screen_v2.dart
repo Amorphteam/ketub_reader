@@ -9,6 +9,7 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import 'cubit/epub_viewer_cubit.dart';
+import 'helper/style_helper.dart';
 import 'models/epub_viewer_entry_data.dart';
 import 'models/search_model.dart';
 import 'widgets/epub_content_list.dart';
@@ -573,8 +574,13 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
     final fontSize = stateData.fontSize;
     final lineHeight = stateData.lineHeight;
     final fontFamily = stateData.fontFamily;
+    final resolvedUniformTextColor = stateData.useUniformTextColor
+        ? StyleHelper.themeUniformTextColor(
+            isDarkMode ? Brightness.dark : Brightness.light,
+          )
+        : stateData.uniformTextColor;
     final styleSignature =
-        '${fontSize.index}-${lineHeight.index}-${fontFamily.index}-${stateData.backgroundColor.value}-${stateData.useCustomBackgroundColor}-${stateData.useUniformTextColor}-${stateData.uniformTextColor.value}-${stateData.hideArabicDiacritics}';
+        '${fontSize.index}-${lineHeight.index}-${fontFamily.index}-${stateData.backgroundColor.value}-${stateData.useCustomBackgroundColor}-${stateData.useUniformTextColor}-${resolvedUniformTextColor.value}-${stateData.hideArabicDiacritics}';
     final sliderValue = _sliderDragValue ?? stateData.currentPage;
 
     if (content.isEmpty) {
@@ -614,7 +620,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
                 : null,
             backgroundColor: stateData.backgroundColor,
             useUniformTextColor: stateData.useUniformTextColor,
-            uniformTextColor: stateData.uniformTextColor,
+            uniformTextColor: resolvedUniformTextColor,
             styleSignature: styleSignature,
             onAnchorIdTap: widget.onAnchorIdTap,
             customStyle: widget.customStyle,
@@ -917,7 +923,6 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
                     fontSize: stateData.fontSize,
                     useCustomBackgroundColor: stateData.useCustomBackgroundColor,
                     useUniformTextColor: stateData.useUniformTextColor,
-                    uniformTextColor: stateData.uniformTextColor,
                     hideArabicDiacritics: stateData.hideArabicDiacritics,
                   ),
                 ],

@@ -21,6 +21,12 @@ class StyleHelper {
 
   static final StyleHelper _instance = StyleHelper._();
 
+  /// Uniform text mode: black in light theme, light grey in dark theme.
+  static Color themeUniformTextColor(Brightness brightness) =>
+      brightness == Brightness.dark
+          ? const Color(0xFFCCCCCC)
+          : const Color(0xFF000000);
+
   // Methods to change properties
   void changeFontSize(FontSizeCustom newSize) => fontSize = newSize;
   void changeFontFamily(FontFamily newFontFamily) => fontFamily = newFontFamily;

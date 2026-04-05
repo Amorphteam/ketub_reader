@@ -4,6 +4,7 @@ import 'package:cupertino_native/cupertino_native.dart';
 
 import '../models/style_model.dart';
 import '../cubit/epub_viewer_cubit.dart';
+import '../helper/style_helper.dart';
 
 class StyleSheet extends StatefulWidget {
 
@@ -15,7 +16,6 @@ class StyleSheet extends StatefulWidget {
     required this.lineSpace,
     this.useCustomBackgroundColor,
     this.useUniformTextColor,
-    this.uniformTextColor,
     this.hideArabicDiacritics,
   });
   final EpubViewerCubit epubViewerCubit;
@@ -24,7 +24,6 @@ class StyleSheet extends StatefulWidget {
   final LineHeightCustom lineSpace;
   final bool? useCustomBackgroundColor;
   final bool? useUniformTextColor;
-  final Color? uniformTextColor;
   final bool? hideArabicDiacritics;
 
   @override
@@ -43,7 +42,6 @@ class _StyleSheetState extends State<StyleSheet> {
   late Color _backgroundColor;
   late bool _useCustomBackgroundColor;
   late bool _useUniformTextColor;
-  late Color _uniformTextColor;
   late bool _hideArabicDiacritics;
   static const List<Color> _backgroundOptions = [
     Color(0xFFFFFFFF),
@@ -52,14 +50,6 @@ class _StyleSheetState extends State<StyleSheet> {
     Color(0xFFE6F4EA),
     Color(0xFF1B1B1B),
   ];
-  static const List<Color> _textColorOptions = [
-    Color(0xFF111111),
-    Color(0xFF00695C),
-    Color(0xFF6A1B9A),
-    Color(0xFF5D4037),
-    Color(0xFFFFFFFF),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -74,8 +64,6 @@ class _StyleSheetState extends State<StyleSheet> {
         widget.epubViewerCubit.useCustomBackgroundColor;
     _useUniformTextColor =
         widget.useUniformTextColor ?? widget.epubViewerCubit.useUniformTextColor;
-    _uniformTextColor = widget.uniformTextColor ??
-        widget.epubViewerCubit.cachedUniformTextColor;
     _hideArabicDiacritics =
         widget.hideArabicDiacritics ?? widget.epubViewerCubit.hideArabicDiacritics;
   }
@@ -144,14 +132,6 @@ class _StyleSheetState extends State<StyleSheet> {
     });
     widget.epubViewerCubit.changeStyle(backgroundColor: color);
   }
-
-  void _updateUniformTextColor(Color color) {
-    setState(() {
-      _uniformTextColor = color;
-    });
-    widget.epubViewerCubit.changeStyle(uniformTextColor: color);
-  }
-
 
   @override
   Widget build(BuildContext context) => Directionality(
@@ -432,41 +412,14 @@ class _StyleSheetState extends State<StyleSheet> {
                 setState(() {
                   _useUniformTextColor = value;
                 });
-                widget.epubViewerCubit
-                    .changeStyle(useUniformTextColor: value);
+                final themeGrey = StyleHelper.themeUniformTextColor(
+                  Theme.of(context).brightness,
+                );
+                widget.epubViewerCubit.changeStyle(
+                  useUniformTextColor: value,
+                  uniformTextColor: value ? themeGrey : null,
+                );
               },
-            ),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: _useUniformTextColor
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 26),
-                          child: Text(
-                            'اختر لون النص',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: _textColorOptions.map((color) {
-                            final isSelected =
-                                color.value == _uniformTextColor.value;
-                            return _ColorSwatch(
-                              color: color,
-                              isSelected: isSelected,
-                              onTap: () => _updateUniformTextColor(color),
-                              showBorder: color.value == const Color(0xFFFFFFFF).value,
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    )
-                  : const SizedBox.shrink(),
             ),
             // IconButton(
             //   icon: Icon(Icons.color_lens),
