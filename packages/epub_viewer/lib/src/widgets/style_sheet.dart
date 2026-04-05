@@ -13,7 +13,7 @@ class StyleSheet extends StatefulWidget {
     required this.fontSize,
     required this.fontFamily,
     required this.lineSpace,
-    this.backgroundColor,
+    this.useCustomBackgroundColor,
     this.useUniformTextColor,
     this.uniformTextColor,
     this.hideArabicDiacritics,
@@ -22,7 +22,7 @@ class StyleSheet extends StatefulWidget {
   final FontSizeCustom fontSize;
   final FontFamily fontFamily;
   final LineHeightCustom lineSpace;
-  final Color? backgroundColor;
+  final bool? useCustomBackgroundColor;
   final bool? useUniformTextColor;
   final Color? uniformTextColor;
   final bool? hideArabicDiacritics;
@@ -41,6 +41,7 @@ class _StyleSheetState extends State<StyleSheet> {
   bool _isFontSizeSliderChange = false;
   bool _isLineHeightSliderChange = false;
   late Color _backgroundColor;
+  late bool _useCustomBackgroundColor;
   late bool _useUniformTextColor;
   late Color _uniformTextColor;
   late bool _hideArabicDiacritics;
@@ -68,8 +69,9 @@ class _StyleSheetState extends State<StyleSheet> {
     _fontSizeSliderValue = fontSizeToSliderValue(widget.fontSize);
     _lineHeightSliderValue = lineSpaceToSliderValue(widget.lineSpace);
     _selectedChipIndex = FontFamily.values.indexOf(widget.fontFamily);
-    _backgroundColor =
-        widget.backgroundColor ?? widget.epubViewerCubit.cachedBackgroundColor;
+    _backgroundColor = widget.epubViewerCubit.cachedBackgroundColor;
+    _useCustomBackgroundColor = widget.useCustomBackgroundColor ??
+        widget.epubViewerCubit.useCustomBackgroundColor;
     _useUniformTextColor =
         widget.useUniformTextColor ?? widget.epubViewerCubit.useUniformTextColor;
     _uniformTextColor = widget.uniformTextColor ??
@@ -373,28 +375,56 @@ class _StyleSheetState extends State<StyleSheet> {
               },
             ),
 
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 26),
-              child: Text(
-                'لون الخلفية',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+            SwitchListTile(
+              title: const Text('تخصيص لون الخلفية'),
+              value: _useCustomBackgroundColor,
+              onChanged: (value) {
+                setState(() {
+                  _useCustomBackgroundColor = value;
+                });
+                widget.epubViewerCubit
+                    .changeStyle(useCustomBackgroundColor: value);
+              },
             ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: _backgroundOptions.map((color) {
-                final isSelected = color.value == _backgroundColor.value;
-                return _ColorSwatch(
-                  color: color,
-                  isSelected: isSelected,
-                  onTap: () => _updateBackgroundColor(color),
-                  showBorder: color.value == const Color(0xFFFFFFFF).value,
-                );
-              }).toList(),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: _useCustomBackgroundColor
+                  ? Column(
+                      key: const ValueKey('bg_custom'),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 26),
+                          child: Text(
+                            'اختر لون الخلفية',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: _backgroundOptions.map((color) {
+                            final isSelected =
+                                color.value == _backgroundColor.value;
+                            return _ColorSwatch(
+                              color: color,
+                              isSelected: isSelected,
+                              onTap: () => _updateBackgroundColor(color),
+                              showBorder: color.value ==
+                                  const Color(0xFFFFFFFF).value,
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    )
+                  : SizedBox(
+                      key: const ValueKey('bg_theme'),
+                      width: 0,
+                      height: 0,
+                    ),
             ),
-            const SizedBox(height: 24),
             SwitchListTile(
               title: const Text('استخدام لون موحّد للنص'),
               value: _useUniformTextColor,

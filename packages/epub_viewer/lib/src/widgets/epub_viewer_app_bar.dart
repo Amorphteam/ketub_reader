@@ -20,6 +20,10 @@ class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
   /// Custom icon for the extra action button (e.g. translate, audio).
   /// When null, defaults to translate icon for backward compatibility.
   final IconData? extraActionIcon;
+  /// When false, the search action is not shown (in-reader search cannot be opened from the bar).
+  final bool showSearchButton;
+  /// When false, the table-of-contents action is not shown.
+  final bool showTocButton;
 
   const EpubViewerAppBar({
     super.key,
@@ -37,6 +41,8 @@ class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onExtraActionPressed,
     this.showExtraActionButton = false,
     this.extraActionIcon,
+    this.showSearchButton = true,
+    this.showTocButton = true,
   });
 
   @override
@@ -79,11 +85,12 @@ class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: isSearchOpen || isAboutUsBook
           ? null
           : [
-              IconButton(
-                icon: Icon(
-                    isIOS ? CupertinoIcons.search : Icons.search_rounded),
-                onPressed: onSearchToggle,
-              ),
+              if (showSearchButton)
+                IconButton(
+                  icon: Icon(
+                      isIOS ? CupertinoIcons.search : Icons.search_rounded),
+                  onPressed: onSearchToggle,
+                ),
               IconButton(
                 icon: Icon(isIOS
                     ? CupertinoIcons.textformat
@@ -110,11 +117,12 @@ class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                   onPressed: onExtraActionPressed,
                 ),
-              IconButton(
-                icon: Icon(
-                    isIOS ? CupertinoIcons.list_bullet : Icons.toc_rounded),
-                onPressed: onTocPressed,
-              ),
+              if (showTocButton)
+                IconButton(
+                  icon: Icon(
+                      isIOS ? CupertinoIcons.list_bullet : Icons.toc_rounded),
+                  onPressed: onTocPressed,
+                ),
             ],
     );
   }

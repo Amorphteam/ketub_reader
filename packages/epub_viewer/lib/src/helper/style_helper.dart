@@ -14,6 +14,7 @@ class StyleHelper {
   FontFamily fontFamily = FontFamily.font1;
   LineHeightCustom lineSpace = LineHeightCustom.medium;
   Color backgroundColor = const Color(0xFFFFFFFF);
+  bool useCustomBackgroundColor = false;
   bool useUniformTextColor = false;
   Color uniformTextColor = const Color(0xFF000000);
   bool hideArabicDiacritics = false;
@@ -25,6 +26,8 @@ class StyleHelper {
   void changeFontFamily(FontFamily newFontFamily) => fontFamily = newFontFamily;
   void changeLineSpace(LineHeightCustom newLineSpace) => lineSpace = newLineSpace;
   void changeBackgroundColor(Color newColor) => backgroundColor = newColor;
+  void toggleCustomBackgroundColor(bool enabled) =>
+      useCustomBackgroundColor = enabled;
   void toggleUniformTextColor(bool enabled) => useUniformTextColor = enabled;
   void changeUniformTextColor(Color newColor) => uniformTextColor = newColor;
   void toggleHideArabicDiacritics(bool enabled) => hideArabicDiacritics = enabled;
@@ -35,6 +38,7 @@ class StyleHelper {
     'fontFamily': fontFamily.index,
     'lineSpace': lineSpace.index,
     'backgroundColor': backgroundColor.value,
+    'useCustomBackgroundColor': useCustomBackgroundColor,
     'useUniformTextColor': useUniformTextColor,
     'uniformTextColor': uniformTextColor.value,
     'hideArabicDiacritics': hideArabicDiacritics,
@@ -46,6 +50,7 @@ class StyleHelper {
     lineSpace = LineHeightCustom.values[json['lineSpace'] ?? LineHeightCustom.medium.index];
     fontFamily = FontFamily.values[json['fontFamily'] ?? FontFamily.font1.index];
     backgroundColor = Color(json['backgroundColor'] ?? const Color(0xFFFFFFFF).value);
+    useCustomBackgroundColor = json['useCustomBackgroundColor'] ?? false;
     useUniformTextColor = json['useUniformTextColor'] ?? false;
     uniformTextColor = Color(json['uniformTextColor'] ?? const Color(0xFF000000).value);
     hideArabicDiacritics = json['hideArabicDiacritics'] ?? false;

@@ -12,6 +12,7 @@ class EpubViewerState with _$EpubViewerState {
     LineHeightCustom? lineHeight,
     FontFamily? fontFamily,
     Color? backgroundColor,
+    bool? useCustomBackgroundColor,
     bool? useUniformTextColor,
     Color? uniformTextColor,
     bool? hideArabicDiacritics,

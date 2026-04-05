@@ -59,6 +59,7 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
   LineHeightCustom _cachedLineHeight = LineHeightCustom.medium;
   FontFamily _cachedFontFamily = FontFamily.font1;
   Color _cachedBackgroundColor = const Color(0xFFFFFFFF);
+  bool _cachedUseCustomBackgroundColor = false;
   bool _cachedUseUniformTextColor = false;
   Color _cachedUniformTextColor = const Color(0xFF000000);
   bool _cachedHideArabicDiacritics = false;
@@ -86,6 +87,7 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
   LineHeightCustom get cachedLineHeight => _cachedLineHeight;
   FontFamily get cachedFontFamily => _cachedFontFamily;
   Color get cachedBackgroundColor => _cachedBackgroundColor;
+  bool get useCustomBackgroundColor => _cachedUseCustomBackgroundColor;
   bool get useUniformTextColor => _cachedUseUniformTextColor;
   Color get cachedUniformTextColor => _cachedUniformTextColor;
   bool get hideArabicDiacritics => _cachedHideArabicDiacritics;
@@ -271,6 +273,7 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
     LineHeightCustom? lineSpace,
     FontFamily? fontFamily,
     Color? backgroundColor,
+    bool? useCustomBackgroundColor,
     bool? useUniformTextColor,
     Color? uniformTextColor,
     bool? hideArabicDiacritics,
@@ -290,6 +293,10 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
     if (backgroundColor != null) {
       styleHelper.changeBackgroundColor(backgroundColor);
       _cachedBackgroundColor = backgroundColor;
+    }
+    if (useCustomBackgroundColor != null) {
+      styleHelper.toggleCustomBackgroundColor(useCustomBackgroundColor);
+      _cachedUseCustomBackgroundColor = useCustomBackgroundColor;
     }
     if (useUniformTextColor != null) {
       styleHelper.toggleUniformTextColor(useUniformTextColor);
@@ -311,6 +318,7 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
       lineHeight: lineSpace,
       fontFamily: fontFamily,
       backgroundColor: backgroundColor,
+      useCustomBackgroundColor: useCustomBackgroundColor,
       useUniformTextColor: useUniformTextColor,
       uniformTextColor: uniformTextColor,
       hideArabicDiacritics: hideArabicDiacritics,
@@ -612,6 +620,7 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
       _cachedLineHeight = styleHelper.lineSpace;
       _cachedFontFamily = styleHelper.fontFamily;
       _cachedBackgroundColor = styleHelper.backgroundColor;
+      _cachedUseCustomBackgroundColor = styleHelper.useCustomBackgroundColor;
       _cachedUseUniformTextColor = styleHelper.useUniformTextColor;
       _cachedUniformTextColor = styleHelper.uniformTextColor;
       _cachedHideArabicDiacritics = styleHelper.hideArabicDiacritics;
@@ -621,6 +630,7 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
         lineHeight: styleHelper.lineSpace,
         fontFamily: styleHelper.fontFamily,
         backgroundColor: styleHelper.backgroundColor,
+        useCustomBackgroundColor: styleHelper.useCustomBackgroundColor,
         useUniformTextColor: styleHelper.useUniformTextColor,
         uniformTextColor: styleHelper.uniformTextColor,
         hideArabicDiacritics: styleHelper.hideArabicDiacritics,

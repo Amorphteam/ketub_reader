@@ -58,16 +58,19 @@ class EpubViewerStateExtractor {
     LineHeightCustom? tempLineHeight;
     FontFamily? tempFontFamily;
     Color? tempBackgroundColor;
+    bool? tempUseCustomBackgroundColor;
     bool? tempUseUniformTextColor;
     Color? tempUniformTextColor;
     bool? tempHideArabicDiacritics;
     
     state.maybeWhen(
-      styleChanged: (fs, lh, ff, bg, uniformEnabled, uniformColor, hideErab) {
+      styleChanged:
+          (fs, lh, ff, bg, useCustomBg, uniformEnabled, uniformColor, hideErab) {
         tempFontSize = fs;
         tempLineHeight = lh;
         tempFontFamily = ff;
         tempBackgroundColor = bg;
+        tempUseCustomBackgroundColor = useCustomBg;
         tempUseUniformTextColor = uniformEnabled;
         tempUniformTextColor = uniformColor;
         tempHideArabicDiacritics = hideErab;
@@ -75,28 +78,27 @@ class EpubViewerStateExtractor {
       orElse: () {},
     );
 
-    // Determine background color with dark mode override
-    // In dark mode, force dark background (0xFF1B1B1B) unless user explicitly chose dark
-    // This ensures dark mode always defaults to dark, but respects user's menu choice
     const darkBackgroundColor = Color(0xFF1B1B1B);
+    const lightBackgroundColor = Color(0xFFFFFFFF);
+    final bool useCustomBg =
+        tempUseCustomBackgroundColor ?? cubit?.useCustomBackgroundColor ?? false;
+
     final Color backgroundColor;
-    
-    // Get the candidate color (from state or cached)
-    final Color? candidateColor = tempBackgroundColor ?? cubit?.cachedBackgroundColor;
-    
-    if (isDarkMode) {
-      // In dark mode: force dark background if candidate is not already dark
-      // This handles the case where cached/preferences have light colors
-      if (candidateColor != null && candidateColor.value == darkBackgroundColor.value) {
-        // User explicitly chose dark from menu - use it
-        backgroundColor = candidateColor;
-      } else {
-        // Force dark in dark mode (overrides light colors from cache/preferences)
-        backgroundColor = darkBackgroundColor;
-      }
+    if (!useCustomBg) {
+      backgroundColor = isDarkMode ? darkBackgroundColor : lightBackgroundColor;
     } else {
-      // Light mode: use candidate color or default to white
-      backgroundColor = candidateColor ?? const Color(0xFFFFFFFF);
+      final Color? candidateColor =
+          tempBackgroundColor ?? cubit?.cachedBackgroundColor;
+      if (isDarkMode) {
+        if (candidateColor != null &&
+            candidateColor.value == darkBackgroundColor.value) {
+          backgroundColor = candidateColor;
+        } else {
+          backgroundColor = candidateColor ?? darkBackgroundColor;
+        }
+      } else {
+        backgroundColor = candidateColor ?? lightBackgroundColor;
+      }
     }
 
     return EpubViewerStateData(
@@ -110,6 +112,7 @@ class EpubViewerStateExtractor {
       lineHeight: tempLineHeight ?? cubit?.cachedLineHeight ?? LineHeightCustom.medium,
       fontFamily: tempFontFamily ?? cubit?.cachedFontFamily ?? FontFamily.font1,
       backgroundColor: backgroundColor,
+      useCustomBackgroundColor: useCustomBg,
       useUniformTextColor: tempUseUniformTextColor ?? cubit?.useUniformTextColor ?? false,
       uniformTextColor: tempUniformTextColor ?? cubit?.cachedUniformTextColor ?? const Color(0xFF000000),
       hideArabicDiacritics: tempHideArabicDiacritics ?? cubit?.hideArabicDiacritics ?? false,
@@ -128,6 +131,7 @@ class EpubViewerStateData {
   final LineHeightCustom lineHeight;
   final FontFamily fontFamily;
   final Color backgroundColor;
+  final bool useCustomBackgroundColor;
   final bool useUniformTextColor;
   final Color uniformTextColor;
   final bool hideArabicDiacritics;
@@ -143,6 +147,7 @@ class EpubViewerStateData {
     required this.lineHeight,
     required this.fontFamily,
     required this.backgroundColor,
+    required this.useCustomBackgroundColor,
     required this.useUniformTextColor,
     required this.uniformTextColor,
     required this.hideArabicDiacritics,

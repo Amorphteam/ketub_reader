@@ -30,6 +30,7 @@ mixin _$EpubViewerState {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)
@@ -59,6 +60,7 @@ mixin _$EpubViewerState {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -87,6 +89,7 @@ mixin _$EpubViewerState {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -227,6 +230,7 @@ class _$InitialImpl implements _Initial {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)
@@ -259,6 +263,7 @@ class _$InitialImpl implements _Initial {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -290,6 +295,7 @@ class _$InitialImpl implements _Initial {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -429,6 +435,7 @@ class _$LoadingImpl implements _Loading {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)
@@ -461,6 +468,7 @@ class _$LoadingImpl implements _Loading {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -492,6 +500,7 @@ class _$LoadingImpl implements _Loading {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -699,6 +708,7 @@ class _$LoadedImpl implements _Loaded {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)
@@ -731,6 +741,7 @@ class _$LoadedImpl implements _Loaded {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -762,6 +773,7 @@ class _$LoadedImpl implements _Loaded {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -941,6 +953,7 @@ class _$errorImpl implements _error {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)
@@ -973,6 +986,7 @@ class _$errorImpl implements _error {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -1004,6 +1018,7 @@ class _$errorImpl implements _error {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -1179,6 +1194,7 @@ class _$PageChangedImpl implements _PageChanged {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)
@@ -1211,6 +1227,7 @@ class _$PageChangedImpl implements _PageChanged {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -1242,6 +1259,7 @@ class _$PageChangedImpl implements _PageChanged {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -1347,6 +1365,7 @@ abstract class _$$StyleChangedImplCopyWith<$Res> {
       LineHeightCustom? lineHeight,
       FontFamily? fontFamily,
       Color? backgroundColor,
+      bool? useCustomBackgroundColor,
       bool? useUniformTextColor,
       Color? uniformTextColor,
       bool? hideArabicDiacritics});
@@ -1369,6 +1388,7 @@ class __$$StyleChangedImplCopyWithImpl<$Res>
     Object? lineHeight = freezed,
     Object? fontFamily = freezed,
     Object? backgroundColor = freezed,
+    Object? useCustomBackgroundColor = freezed,
     Object? useUniformTextColor = freezed,
     Object? uniformTextColor = freezed,
     Object? hideArabicDiacritics = freezed,
@@ -1390,6 +1410,10 @@ class __$$StyleChangedImplCopyWithImpl<$Res>
           ? _value.backgroundColor
           : backgroundColor // ignore: cast_nullable_to_non_nullable
               as Color?,
+      useCustomBackgroundColor: freezed == useCustomBackgroundColor
+          ? _value.useCustomBackgroundColor
+          : useCustomBackgroundColor // ignore: cast_nullable_to_non_nullable
+              as bool?,
       useUniformTextColor: freezed == useUniformTextColor
           ? _value.useUniformTextColor
           : useUniformTextColor // ignore: cast_nullable_to_non_nullable
@@ -1414,6 +1438,7 @@ class _$StyleChangedImpl implements _StyleChanged {
       this.lineHeight,
       this.fontFamily,
       this.backgroundColor,
+      this.useCustomBackgroundColor,
       this.useUniformTextColor,
       this.uniformTextColor,
       this.hideArabicDiacritics});
@@ -1427,6 +1452,8 @@ class _$StyleChangedImpl implements _StyleChanged {
   @override
   final Color? backgroundColor;
   @override
+  final bool? useCustomBackgroundColor;
+  @override
   final bool? useUniformTextColor;
   @override
   final Color? uniformTextColor;
@@ -1435,7 +1462,7 @@ class _$StyleChangedImpl implements _StyleChanged {
 
   @override
   String toString() {
-    return 'EpubViewerState.styleChanged(fontSize: $fontSize, lineHeight: $lineHeight, fontFamily: $fontFamily, backgroundColor: $backgroundColor, useUniformTextColor: $useUniformTextColor, uniformTextColor: $uniformTextColor, hideArabicDiacritics: $hideArabicDiacritics)';
+    return 'EpubViewerState.styleChanged(fontSize: $fontSize, lineHeight: $lineHeight, fontFamily: $fontFamily, backgroundColor: $backgroundColor, useCustomBackgroundColor: $useCustomBackgroundColor, useUniformTextColor: $useUniformTextColor, uniformTextColor: $uniformTextColor, hideArabicDiacritics: $hideArabicDiacritics)';
   }
 
   @override
@@ -1451,6 +1478,8 @@ class _$StyleChangedImpl implements _StyleChanged {
                 other.fontFamily == fontFamily) &&
             (identical(other.backgroundColor, backgroundColor) ||
                 other.backgroundColor == backgroundColor) &&
+            (identical(other.useCustomBackgroundColor, useCustomBackgroundColor) ||
+                other.useCustomBackgroundColor == useCustomBackgroundColor) &&
             (identical(other.useUniformTextColor, useUniformTextColor) ||
                 other.useUniformTextColor == useUniformTextColor) &&
             (identical(other.uniformTextColor, uniformTextColor) ||
@@ -1466,6 +1495,7 @@ class _$StyleChangedImpl implements _StyleChanged {
       lineHeight,
       fontFamily,
       backgroundColor,
+      useCustomBackgroundColor,
       useUniformTextColor,
       uniformTextColor,
       hideArabicDiacritics);
@@ -1493,6 +1523,7 @@ class _$StyleChangedImpl implements _StyleChanged {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)
@@ -1508,7 +1539,7 @@ class _$StyleChangedImpl implements _StyleChanged {
         contentHighlighted,
   }) {
     return styleChanged(fontSize, lineHeight, fontFamily, backgroundColor,
-        useUniformTextColor, uniformTextColor, hideArabicDiacritics);
+        useCustomBackgroundColor, useUniformTextColor, uniformTextColor, hideArabicDiacritics);
   }
 
   @override
@@ -1526,6 +1557,7 @@ class _$StyleChangedImpl implements _StyleChanged {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -1540,7 +1572,7 @@ class _$StyleChangedImpl implements _StyleChanged {
         contentHighlighted,
   }) {
     return styleChanged?.call(fontSize, lineHeight, fontFamily, backgroundColor,
-        useUniformTextColor, uniformTextColor, hideArabicDiacritics);
+        useCustomBackgroundColor, useUniformTextColor, uniformTextColor, hideArabicDiacritics);
   }
 
   @override
@@ -1558,6 +1590,7 @@ class _$StyleChangedImpl implements _StyleChanged {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -1574,7 +1607,7 @@ class _$StyleChangedImpl implements _StyleChanged {
   }) {
     if (styleChanged != null) {
       return styleChanged(fontSize, lineHeight, fontFamily, backgroundColor,
-          useUniformTextColor, uniformTextColor, hideArabicDiacritics);
+          useCustomBackgroundColor, useUniformTextColor, uniformTextColor, hideArabicDiacritics);
     }
     return orElse();
   }
@@ -1647,6 +1680,7 @@ abstract class _StyleChanged implements EpubViewerState {
       final LineHeightCustom? lineHeight,
       final FontFamily? fontFamily,
       final Color? backgroundColor,
+      final bool? useCustomBackgroundColor,
       final bool? useUniformTextColor,
       final Color? uniformTextColor,
       final bool? hideArabicDiacritics}) = _$StyleChangedImpl;
@@ -1655,6 +1689,7 @@ abstract class _StyleChanged implements EpubViewerState {
   LineHeightCustom? get lineHeight;
   FontFamily? get fontFamily;
   Color? get backgroundColor;
+  bool? get useCustomBackgroundColor;
   bool? get useUniformTextColor;
   Color? get uniformTextColor;
   bool? get hideArabicDiacritics;
@@ -1746,6 +1781,7 @@ class _$BookmarkAddedImpl implements _BookmarkAdded {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)
@@ -1778,6 +1814,7 @@ class _$BookmarkAddedImpl implements _BookmarkAdded {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -1809,6 +1846,7 @@ class _$BookmarkAddedImpl implements _BookmarkAdded {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -1983,6 +2021,7 @@ class _$HistoryAddedImpl implements _HistoryAdded {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)
@@ -2015,6 +2054,7 @@ class _$HistoryAddedImpl implements _HistoryAdded {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -2046,6 +2086,7 @@ class _$HistoryAddedImpl implements _HistoryAdded {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -2230,6 +2271,7 @@ class _$SearchResultsFoundImpl implements _SearchResultsFound {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)
@@ -2262,6 +2304,7 @@ class _$SearchResultsFoundImpl implements _SearchResultsFound {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -2293,6 +2336,7 @@ class _$SearchResultsFoundImpl implements _SearchResultsFound {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -2442,6 +2486,7 @@ class _$BookmarkPresentImpl implements _BookmarkPresent {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)
@@ -2474,6 +2519,7 @@ class _$BookmarkPresentImpl implements _BookmarkPresent {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -2505,6 +2551,7 @@ class _$BookmarkPresentImpl implements _BookmarkPresent {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -2644,6 +2691,7 @@ class _$BookmarkAbsentImpl implements _BookmarkAbsent {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)
@@ -2676,6 +2724,7 @@ class _$BookmarkAbsentImpl implements _BookmarkAbsent {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -2707,6 +2756,7 @@ class _$BookmarkAbsentImpl implements _BookmarkAbsent {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -2915,6 +2965,7 @@ class _$ContentHighlightedImpl implements _ContentHighlighted {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)
@@ -2947,6 +2998,7 @@ class _$ContentHighlightedImpl implements _ContentHighlighted {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?
@@ -2978,6 +3030,7 @@ class _$ContentHighlightedImpl implements _ContentHighlighted {
             LineHeightCustom? lineHeight,
             FontFamily? fontFamily,
             Color? backgroundColor,
+            bool? useCustomBackgroundColor,
             bool? useUniformTextColor,
             Color? uniformTextColor,
             bool? hideArabicDiacritics)?

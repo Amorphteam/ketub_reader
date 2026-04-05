@@ -28,6 +28,8 @@ class EpubViewerScreenV2 extends StatefulWidget {
     required this.entryData,
     this.enableContentCache = true,
     this.showBottomBar = true,
+    this.showAppBarSearchButton = true,
+    this.showAppBarTocButton = true,
     this.onBookmarksChanged,
     this.onAnchorIdTap,
     this.onExtraActionPressed,
@@ -41,6 +43,10 @@ class EpubViewerScreenV2 extends StatefulWidget {
   /// When true, shows the bottom bar (page slider). When false, hides it.
   /// Defaults to true.
   final bool showBottomBar;
+  /// When false, hides the search icon in the app bar (users cannot open in-reader search from there).
+  final bool showAppBarSearchButton;
+  /// When false, hides the table-of-contents icon in the app bar.
+  final bool showAppBarTocButton;
   final Future<void> Function()? onBookmarksChanged;
   final void Function(BuildContext context, String anchorId)? onAnchorIdTap;
   final void Function(
@@ -273,6 +279,8 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
                       ? () => _handleExtraActionPressed(context, stateData)
                       : null,
                   extraActionIcon: widget.extraActionIcon,
+                  showSearchButton: widget.showAppBarSearchButton,
+                  showTocButton: widget.showAppBarTocButton,
                 )
               : null,
           body: SafeArea(
@@ -566,7 +574,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
     final lineHeight = stateData.lineHeight;
     final fontFamily = stateData.fontFamily;
     final styleSignature =
-        '${fontSize.index}-${lineHeight.index}-${fontFamily.index}-${stateData.backgroundColor.value}-${stateData.useUniformTextColor}-${stateData.uniformTextColor.value}-${stateData.hideArabicDiacritics}';
+        '${fontSize.index}-${lineHeight.index}-${fontFamily.index}-${stateData.backgroundColor.value}-${stateData.useCustomBackgroundColor}-${stateData.useUniformTextColor}-${stateData.uniformTextColor.value}-${stateData.hideArabicDiacritics}';
     final sliderValue = _sliderDragValue ?? stateData.currentPage;
 
     if (content.isEmpty) {
@@ -907,7 +915,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
                     lineSpace: stateData.lineHeight,
                     fontFamily: stateData.fontFamily,
                     fontSize: stateData.fontSize,
-                    backgroundColor: stateData.backgroundColor,
+                    useCustomBackgroundColor: stateData.useCustomBackgroundColor,
                     useUniformTextColor: stateData.useUniformTextColor,
                     uniformTextColor: stateData.uniformTextColor,
                     hideArabicDiacritics: stateData.hideArabicDiacritics,
