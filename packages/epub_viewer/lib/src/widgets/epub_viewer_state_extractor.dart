@@ -44,7 +44,7 @@ class EpubViewerStateExtractor {
     // Extract current page - use from state if available, otherwise use cubit's current page
     double currentPage = 0.0;
     state.maybeWhen(
-      pageChanged: (pageNumber) {
+      pageChanged: (pageNumber, _) {
         currentPage = pageNumber?.toDouble() ?? 0.0;
       },
       orElse: () {

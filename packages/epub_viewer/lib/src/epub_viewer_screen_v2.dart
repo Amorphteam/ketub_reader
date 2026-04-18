@@ -339,18 +339,12 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
             // Wait for initial navigation to complete
             Future.delayed(const Duration(milliseconds: 500), () {
               if (mounted) {
-                // Try as-is, then try with common 'Text/' prefix
                 _navigationCoordinator.requestJump();
-                cubit.jumpToPage(chapterFileName: fileName);
-                if (!fileName.contains('/')) {
-                  // Fallback attempt with Text/ prefix
-                  Future.delayed(const Duration(milliseconds: 100), () {
-                    if (mounted) {
-                      _navigationCoordinator.requestJump();
-                      cubit.jumpToPage(chapterFileName: 'Text/$fileName');
-                    }
-                  });
-                }
+                // Single jump: cubit retries `Text/` only if the first path fails.
+                cubit.jumpToPage(
+                  chapterFileName: fileName,
+                  tryChapterTextPrefixFallback: true,
+                );
               }
             });
           }
@@ -382,10 +376,10 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
         // No additional action needed here when results are found
       },
       contentHighlighted: (content, highlightedIndex, pageHighlights) {
-        // Scroll to the highlighted page
-        _scrollToPage(highlightedIndex);
-        
-        // Scroll to the highlight ID after a short delay to ensure content is rendered
+        // Legacy Masaha: always new GlobalKey + jumpTo for highlight flows (same page ok).
+        _navigationCoordinator.requestJump();
+        _scrollToPage(highlightedIndex, legacyMasahaHighlightJump: true);
+
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final cubit = context.read<EpubViewerCubit>();
           final highlightId = cubit.getCurrentHighlightId();
@@ -394,7 +388,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
           }
         });
       },
-      pageChanged: (pageNumber) {
+      pageChanged: (pageNumber, _) {
         if (_pendingSliderCommit) {
           _pendingSliderCommit = false;
           if (_sliderDragValue != null) {
@@ -408,39 +402,29 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
         if (pageNumber != null && !_isPageChangeFromScroll) {
           final cubit = context.read<EpubViewerCubit>();
           final highlightId = cubit.getCurrentHighlightId();
-          
-          // Scroll to page (only if page changed and not from scroll)
-          _scrollToPage(pageNumber);
-          
-          // If this is a highlight navigation, scroll to the highlight
-          // Use a longer delay to ensure the widget has rebuilt with the anchor key
+          _navigationCoordinator.requestJump();
+          _scrollToPage(
+            pageNumber,
+            legacyMasahaHighlightJump: highlightId != null,
+          );
+
           if (highlightId != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              // Add a small delay to ensure the HTML widget has rendered with the anchor
-              Future.delayed(const Duration(milliseconds: 100), () {
-                if (mounted) {
-                  _scrollToHighlight(highlightId);
-                }
-              });
+              if (mounted) {
+                _scrollToHighlight(highlightId);
+              }
             });
           }
         } else if (pageNumber != null && _isPageChangeFromScroll) {
-          // Page changed from scroll - only update the key if needed, don't scroll
-          // This prevents circular scroll loops while still updating the anchor key for highlights
           final cubit = context.read<EpubViewerCubit>();
           final highlightId = cubit.getCurrentHighlightId();
-          
-          // Update page key for highlight navigation without triggering scroll
           _navigationCoordinator.updateCurrentPageKey(pageNumber);
-          
-          // If there's a highlight, scroll to it after a delay
+
           if (highlightId != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              Future.delayed(const Duration(milliseconds: 100), () {
-                if (mounted) {
-                  _scrollToHighlight(highlightId);
-                }
-              });
+              if (mounted) {
+                _scrollToHighlight(highlightId);
+              }
             });
           }
         }
@@ -466,10 +450,25 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
     );
   }
 
-  void _scrollToPage(int pageNumber) {
-    // Only update the key if this is a programmatic jump (not from scroll)
-    // This prevents unnecessary GlobalKey recreation on every scroll
-    final bool pageChanged = _navigationCoordinator.updateCurrentPageKey(pageNumber);
+  void _scrollToPage(int pageNumber, {bool legacyMasahaHighlightJump = false}) {
+    // Same spine page + highlight: rotating the Html key is enough; jumpTo() again
+    // thrashes ScrollablePositionedList, fires item listeners, and skips frames.
+    final bool highlightOnlySamePage = legacyMasahaHighlightJump &&
+        pageNumber == _navigationCoordinator.lastPageForKey;
+
+    final bool pageChanged;
+    if (legacyMasahaHighlightJump) {
+      _navigationCoordinator.legacyPreparePageJump(pageNumber);
+      pageChanged = true;
+    } else {
+      pageChanged = _navigationCoordinator.updateCurrentPageKey(pageNumber);
+    }
+
+    if (highlightOnlySamePage) {
+      _navigationCoordinator.clearJumpRequest();
+      if (mounted) setState(() {});
+      return;
+    }
 
     if (!itemScrollController.isAttached) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -772,24 +771,24 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
     );
   }
   
+  /// Same idea as legacy `_scrollToId`: one post-frame, one `ensureVisible`, no retries.
+  /// Multiple matches in one paragraph may share one anchor — missing context is expected.
   void _scrollToHighlight(String highlightId) {
-    // Use AnchorKey to find the anchor and scroll to it
     final currentPageKey = _navigationCoordinator.currentPageKey;
     if (currentPageKey == null) return;
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       try {
-        // AnchorKey is from flutter_html package
-        // It allows finding anchors by ID within an Html widget
-        final anchorContext = AnchorKey.forId(currentPageKey, highlightId)?.currentContext;
+        final anchorContext =
+            AnchorKey.forId(currentPageKey, highlightId)?.currentContext;
         if (anchorContext != null) {
           Scrollable.ensureVisible(
             anchorContext,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
+            alignment: 0.12,
           );
-        } else {
-          debugPrint('⚠️ Could not find anchor context for highlight: $highlightId');
         }
       } catch (e) {
         debugPrint('Error scrolling to highlight: $e');
@@ -1055,6 +1054,7 @@ class _NavigationCoordinator {
   bool _jumpInProgress = false;
 
   GlobalKey? get currentPageKey => _currentPageKey;
+  int get lastPageForKey => _lastPageForKey;
   bool get isJumpInProgress => _jumpInProgress;
 
   void requestJump() {
@@ -1084,6 +1084,13 @@ class _NavigationCoordinator {
       _lastPageForKey = pageNumber;
     }
     return pageChanged;
+  }
+
+  /// Legacy Masaha `_jumpTo`: new [GlobalKey] on every highlight-driven list jump,
+  /// even when the spine index is unchanged (search arrows on same page).
+  void legacyPreparePageJump(int pageNumber) {
+    _currentPageKey = GlobalKey();
+    _lastPageForKey = pageNumber;
   }
 
   void reset() {

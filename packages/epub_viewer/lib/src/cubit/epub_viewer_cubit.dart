@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:bloc/bloc.dart';
+import 'package:flutter/foundation.dart';
 import 'package:epub_parser/epub_parser.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:html/dom.dart' as dom;
@@ -30,6 +31,15 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
   EpubViewerCubit({required this.persistence}) : super(const EpubViewerState.initial());
   
   final EpubViewerPersistence persistence;
+
+  int _layoutSequenceTick = 0;
+
+  void _emitPageChanged(int? pageNumber) {
+    emit(EpubViewerState.pageChanged(
+      pageNumber: pageNumber,
+      layoutSequence: ++_layoutSequenceTick,
+    ));
+  }
   
   EpubBook? _epubBook;
   List<String>? _spineHtmlContent;
@@ -113,8 +123,16 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
 
 
   Future<void> checkBookmark(String bookPath, String pageIndex) async {
-    final bool isBookmarked = await persistence.bookmarkDataSource.isBookmarked(bookPath, pageIndex);
-    emit(isBookmarked ? const EpubViewerState.bookmarkPresent() : const EpubViewerState.bookmarkAbsent());
+    try {
+      final bool isBookmarked =
+          await persistence.bookmarkDataSource.isBookmarked(bookPath, pageIndex);
+      emit(isBookmarked
+          ? const EpubViewerState.bookmarkPresent()
+          : const EpubViewerState.bookmarkAbsent());
+    } catch (e, st) {
+      debugPrint('checkBookmark failed: $e\n$st');
+      emit(const EpubViewerState.bookmarkAbsent());
+    }
   }
 
   /// Toggle bookmark - add if not exists, remove if exists
@@ -326,10 +344,14 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
   }
 
 
-  Future<void> jumpToPage({String? chapterFileName, int? newPage}) async {
+  Future<void> jumpToPage({
+    String? chapterFileName,
+    int? newPage,
+    bool tryChapterTextPrefixFallback = false,
+  }) async {
     if (newPage != null) {
       _currentPage = newPage;
-      emit(EpubViewerState.pageChanged(pageNumber: newPage));
+      _emitPageChanged(newPage);
       
       // Check bookmark after page change
       if (_assetPath != null) {
@@ -345,8 +367,24 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
         final int spineNumber =
         await findPageIndexInEpub(_epubBook!, chapterFileName, useSpineOrder: true);
         _currentPage = spineNumber;
-        emit(EpubViewerState.pageChanged(pageNumber: spineNumber));
+        _emitPageChanged(spineNumber);
       } catch (error) {
+        if (tryChapterTextPrefixFallback &&
+            !chapterFileName.contains('/') &&
+            _epubBook != null) {
+          try {
+            final int spineNumber = await findPageIndexInEpub(
+              _epubBook!,
+              'Text/$chapterFileName',
+              useSpineOrder: true,
+            );
+            _currentPage = spineNumber;
+            _emitPageChanged(spineNumber);
+            return;
+          } catch (_) {
+            // fall through to emit original error
+          }
+        }
         emit(EpubViewerState.error(error: error.toString()));
       }
     }
@@ -357,7 +395,7 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
     final int targetPage = page.toInt();
     if (targetPage != _currentPage) {
       _currentPage = targetPage;
-      emit(EpubViewerState.pageChanged(pageNumber: _currentPage));
+      _emitPageChanged(_currentPage);
     }
   }
 
@@ -366,7 +404,7 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
   void updateCurrentPageFromScroll(int pageIndex) {
     if (pageIndex != _currentPage) {
       _currentPage = pageIndex;
-      emit(EpubViewerState.pageChanged(pageNumber: _currentPage));
+      _emitPageChanged(_currentPage);
       
       // Debounce bookmark check to reduce database calls
       _scrollDebounceTimer?.cancel();
@@ -423,7 +461,7 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
       ));
     } else {
       // If no content, emit pageChanged to trigger rebuild
-      emit(EpubViewerState.pageChanged(pageNumber: _currentPage));
+      _emitPageChanged(_currentPage);
     }
   }
 
@@ -453,14 +491,23 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
       // Update current page to ensure we're tracking the right page
       _currentPage = currentPageIndex;
       // Emit pageChanged to trigger scroll to highlight (even though page number is same)
-      emit(EpubViewerState.pageChanged(pageNumber: currentPageIndex));
-    } else if (_currentSearchIndex < searchResults.length - 1) {
-      // Move to next search result (different page)
-      _currentSearchIndex++;
-      highlightContent(
-        searchResults[_currentSearchIndex].pageIndex,
-        _currentSearchTerm,
-      );
+      _emitPageChanged(currentPageIndex);
+      return;
+    }
+    if (_currentSearchIndex < searchResults.length - 1) {
+      // Skip repeated same-page hits that belong to already-highlighted paragraph anchors.
+      int nextIndex = _currentSearchIndex + 1;
+      while (nextIndex < searchResults.length &&
+          searchResults[nextIndex].pageIndex - 1 == currentPageIndex) {
+        nextIndex++;
+      }
+      if (nextIndex < searchResults.length) {
+        _currentSearchIndex = nextIndex;
+        highlightContent(
+          searchResults[_currentSearchIndex].pageIndex,
+          _currentSearchTerm,
+        );
+      }
     }
   }
 
@@ -470,6 +517,7 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
     
     final currentResult = searchResults[_currentSearchIndex];
     final currentPageIndex = currentResult.pageIndex - 1;
+    final highlightsOnCurrentPage = _pageHighlights[currentPageIndex] ?? [];
     final currentHighlightIndex = _highlightIndexPerPage[currentPageIndex] ?? 0;
     
     // Check if there's a previous highlight on the current page
@@ -479,20 +527,29 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
       // Update current page to ensure we're tracking the right page
       _currentPage = currentPageIndex;
       // Emit pageChanged to trigger scroll to highlight (even though page number is same)
-      emit(EpubViewerState.pageChanged(pageNumber: currentPageIndex));
-    } else if (_currentSearchIndex > 0) {
-      // Move to previous search result (different page)
-      _currentSearchIndex--;
-      final previousPageIndex = searchResults[_currentSearchIndex].pageIndex - 1;
-      final highlightsOnPreviousPage = _pageHighlights[previousPageIndex] ?? [];
-      // Set highlight index to last highlight on previous page
-      if (highlightsOnPreviousPage.isNotEmpty) {
-        _highlightIndexPerPage[previousPageIndex] = highlightsOnPreviousPage.length - 1;
+      _emitPageChanged(currentPageIndex);
+      return;
+    }
+    if (_currentSearchIndex > 0) {
+      int prevIndex = _currentSearchIndex - 1;
+      while (prevIndex >= 0 &&
+          searchResults[prevIndex].pageIndex - 1 == currentPageIndex) {
+        prevIndex--;
       }
-      highlightContent(
-        searchResults[_currentSearchIndex].pageIndex,
-        _currentSearchTerm,
-      );
+
+      if (prevIndex >= 0) {
+        _currentSearchIndex = prevIndex;
+        final previousPageIndex = searchResults[_currentSearchIndex].pageIndex - 1;
+        final highlightsOnPreviousPage = _pageHighlights[previousPageIndex] ?? [];
+        if (highlightsOnPreviousPage.isNotEmpty) {
+          _highlightIndexPerPage[previousPageIndex] =
+              highlightsOnPreviousPage.length - 1;
+        }
+        highlightContent(
+          searchResults[_currentSearchIndex].pageIndex,
+          _currentSearchTerm,
+        );
+      }
     }
   }
   
@@ -597,7 +654,10 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
   Future<void> handlePostLoadNavigation() async {
     // Handle chapter file name navigation (for TOC)
     if (_pendingChapterFileName != null) {
-      await jumpToPage(chapterFileName: _pendingChapterFileName);
+      await jumpToPage(
+        chapterFileName: _pendingChapterFileName,
+        tryChapterTextPrefixFallback: true,
+      );
       _pendingChapterFileName = null;
     }
     // Handle initial page navigation (for bookmark, history, search)
@@ -700,37 +760,37 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
   }
 
   Future<void> openEpubByChapter(EpubChapter item) async {
-    for (final String fileName in _spineHtmlFileName!){
-      if (fileName == item.ContentFileName){
+    for (final String fileName in _spineHtmlFileName!) {
+      if (fileName == item.ContentFileName) {
         final int spineNumber = await findPageIndexInEpub(_epubBook!, fileName);
         _currentPage = spineNumber;
-        emit(EpubViewerState.pageChanged(pageNumber: spineNumber));
-        
-        // Check bookmark after chapter navigation
+        _emitPageChanged(spineNumber);
+
         if (_assetPath != null) {
           final String bookPath = _assetPath!.replaceFirst('assets/epub/', '');
           Future.delayed(const Duration(milliseconds: 500), () {
             checkBookmark(bookPath, _currentPage.toString());
           });
         }
+        break;
       }
     }
   }
 
   Future<void> openEpubByName(String chapterName) async {
-    for (final String fileName in _spineHtmlFileName!){
-      if (fileName == chapterName){
+    for (final String fileName in _spineHtmlFileName!) {
+      if (fileName == chapterName) {
         final int spineNumber = await findPageIndexInEpub(_epubBook!, fileName);
         _currentPage = spineNumber;
-        emit(EpubViewerState.pageChanged(pageNumber: spineNumber));
-        
-        // Check bookmark after chapter navigation
+        _emitPageChanged(spineNumber);
+
         if (_assetPath != null) {
           final String bookPath = _assetPath!.replaceFirst('assets/epub/', '');
           Future.delayed(const Duration(milliseconds: 500), () {
             checkBookmark(bookPath, _currentPage.toString());
           });
         }
+        break;
       }
     }
   }
@@ -781,6 +841,11 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
     // Normalize the search term by removing diacritics
     final normalizedSearchTerm = persistence.searchService.removeArabicDiacritics(decodedSearchTerm);
 
+    final bool verboseAllahDebug = normalizedSearchTerm.trim() == 'الله';
+    if (verboseAllahDebug) {
+      debugPrint('🔎 [highlight] term="$normalizedSearchTerm" pageIndex=$pageIndex');
+    }
+
     // Create a new list to store updated content
     final List<String> updatedContent = [];
 
@@ -800,6 +865,8 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
       // Remove diacritics from the content for searching
       final normalizedContent = persistence.searchService.removeArabicDiacritics(convertedContent);
 
+      final int pageMatchCount =
+          _countMatchesInContent(normalizedContent, normalizedSearchTerm);
       // Get the positions of matches in the normalized content
       final highlightedContent = _applyHighlightingUsingMapping(convertedContent, normalizedContent, normalizedSearchTerm, globalCounter);
 
@@ -810,9 +877,14 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
       if (pageHighlightIds.isNotEmpty) {
         pageHighlights[pageIdx] = pageHighlightIds;
       }
+      if (verboseAllahDebug && pageMatchCount > 0) {
+        debugPrint(
+          '🔎 [highlight] page=${pageIdx + 1} matches=$pageMatchCount anchors=${pageHighlightIds.length} ids=$pageHighlightIds',
+        );
+      }
 
       // Update global counter by counting the actual matches found in this page
-      globalCounter += _countMatchesInContent(normalizedContent, normalizedSearchTerm);
+      globalCounter += pageMatchCount;
     }
 
     // Store page highlights
@@ -877,6 +949,10 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
     int offset = 0;
     int counter = globalCounter; // Use the global counter passed from parent method
 
+    final bool verboseAllahDebug = normalizedSearchTerm.trim() == 'الله';
+    int reusedParagraphAnchorCount = 0;
+    int addedParagraphAnchorCount = 0;
+
     for (final match in matches) {
       if (!indexMapping.containsKey(match.start) || !indexMapping.containsKey(match.end - 1)) {
         continue; // Skip if mapping is missing
@@ -894,35 +970,48 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
       final parentBlockTagInfo = _findParentBlockTag(highlightedContent, matchStart);
 
       if (parentBlockTagInfo != null) {
-        // Add id attribute to the existing block tag
-        final String blockTagWithId = _addIdToBlockTag(parentBlockTagInfo.blockTag, counter);
+        // Several matches in one paragraph share the same opening block tag.
+        // Replacing id="highlight_*" on each match drops earlier anchors and breaks
+        // flutter_html AnchorKey lookup — keep the first id, only add <mark> for later hits.
+        final bool blockAlreadyHasHighlightId = RegExp(r'\bid="highlight_\d+"')
+            .hasMatch(parentBlockTagInfo.blockTag);
 
-        // Replace the block tag with the one that has id
-        highlightedContent = highlightedContent.replaceRange(
+        var blockTagLengthDiff = 0;
+        if (!blockAlreadyHasHighlightId) {
+          final String blockTagWithId =
+              _addIdToBlockTag(parentBlockTagInfo.blockTag, counter);
+          highlightedContent = highlightedContent.replaceRange(
             parentBlockTagInfo.startIndex,
             parentBlockTagInfo.endIndex,
-            blockTagWithId
-        );
+            blockTagWithId,
+          );
+          blockTagLengthDiff =
+              blockTagWithId.length -
+              (parentBlockTagInfo.endIndex - parentBlockTagInfo.startIndex);
+          offset += blockTagLengthDiff;
+          addedParagraphAnchorCount++;
+        } else {
+          reusedParagraphAnchorCount++;
+          if (verboseAllahDebug) {
+            final existingIdMatch = RegExp(r'id="(highlight_\d+)"')
+                .firstMatch(parentBlockTagInfo.blockTag);
+            debugPrint(
+              '🔁 [highlight] same paragraph; reuse anchor=${existingIdMatch?.group(1) ?? "unknown"} counter=$counter',
+            );
+          }
+        }
 
-        // Adjust offset for the block tag change
-        final int blockTagLengthDiff = blockTagWithId.length - (parentBlockTagInfo.endIndex - parentBlockTagInfo.startIndex);
-        offset += blockTagLengthDiff;
-
-        // Now wrap the matched text with <mark> tags
         final String markedText = '<mark>$originalMatch</mark>';
-
-        // Calculate new positions after block tag modification
         final int newMatchStart = matchStart + blockTagLengthDiff;
         final int newMatchEnd = newMatchStart + originalMatch.length;
 
-        // Replace the matched text with marked version
-        highlightedContent = highlightedContent.replaceRange(newMatchStart, newMatchEnd, markedText);
+        highlightedContent =
+            highlightedContent.replaceRange(newMatchStart, newMatchEnd, markedText);
 
-        // Adjust offset for the mark tags
         final int markLengthDiff = markedText.length - originalMatch.length;
         offset += markLengthDiff;
 
-        counter++; // Increment counter for next unique ID
+        counter++;
       } else {
         // Fallback: if no parent p tag found, use the original approach
         final String replacement = '<p id="highlight_$counter" class="inline"><mark>$originalMatch</mark>';
@@ -934,6 +1023,12 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
         // Adjust offset to account for length increase due to <block> tags
         offset += replacement.length - originalMatch.length;
       }
+    }
+
+    if (verboseAllahDebug) {
+      debugPrint(
+        '🔎 [highlight] totalMatches=${matches.length} addedAnchors=$addedParagraphAnchorCount reusedParagraphAnchors=$reusedParagraphAnchorCount',
+      );
     }
 
     return highlightedContent;

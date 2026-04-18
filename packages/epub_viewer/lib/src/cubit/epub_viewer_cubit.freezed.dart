@@ -24,7 +24,7 @@ mixin _$EpubViewerState {
             List<EpubChapter>? tocTreeList)
         loaded,
     required TResult Function(String error) error,
-    required TResult Function(int? pageNumber) pageChanged,
+    required TResult Function(int? pageNumber, int layoutSequence) pageChanged,
     required TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -54,7 +54,7 @@ mixin _$EpubViewerState {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult? Function(String error)? error,
-    TResult? Function(int? pageNumber)? pageChanged,
+    TResult? Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult? Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -83,7 +83,7 @@ mixin _$EpubViewerState {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult Function(String error)? error,
-    TResult Function(int? pageNumber)? pageChanged,
+    TResult Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -224,7 +224,7 @@ class _$InitialImpl implements _Initial {
             List<EpubChapter>? tocTreeList)
         loaded,
     required TResult Function(String error) error,
-    required TResult Function(int? pageNumber) pageChanged,
+    required TResult Function(int? pageNumber, int layoutSequence) pageChanged,
     required TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -257,7 +257,7 @@ class _$InitialImpl implements _Initial {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult? Function(String error)? error,
-    TResult? Function(int? pageNumber)? pageChanged,
+    TResult? Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult? Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -289,7 +289,7 @@ class _$InitialImpl implements _Initial {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult Function(String error)? error,
-    TResult Function(int? pageNumber)? pageChanged,
+    TResult Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -429,7 +429,7 @@ class _$LoadingImpl implements _Loading {
             List<EpubChapter>? tocTreeList)
         loaded,
     required TResult Function(String error) error,
-    required TResult Function(int? pageNumber) pageChanged,
+    required TResult Function(int? pageNumber, int layoutSequence) pageChanged,
     required TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -462,7 +462,7 @@ class _$LoadingImpl implements _Loading {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult? Function(String error)? error,
-    TResult? Function(int? pageNumber)? pageChanged,
+    TResult? Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult? Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -494,7 +494,7 @@ class _$LoadingImpl implements _Loading {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult Function(String error)? error,
-    TResult Function(int? pageNumber)? pageChanged,
+    TResult Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -702,7 +702,7 @@ class _$LoadedImpl implements _Loaded {
             List<EpubChapter>? tocTreeList)
         loaded,
     required TResult Function(String error) error,
-    required TResult Function(int? pageNumber) pageChanged,
+    required TResult Function(int? pageNumber, int layoutSequence) pageChanged,
     required TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -735,7 +735,7 @@ class _$LoadedImpl implements _Loaded {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult? Function(String error)? error,
-    TResult? Function(int? pageNumber)? pageChanged,
+    TResult? Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult? Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -767,7 +767,7 @@ class _$LoadedImpl implements _Loaded {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult Function(String error)? error,
-    TResult Function(int? pageNumber)? pageChanged,
+    TResult Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -947,7 +947,7 @@ class _$errorImpl implements _error {
             List<EpubChapter>? tocTreeList)
         loaded,
     required TResult Function(String error) error,
-    required TResult Function(int? pageNumber) pageChanged,
+    required TResult Function(int? pageNumber, int layoutSequence) pageChanged,
     required TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -980,7 +980,7 @@ class _$errorImpl implements _error {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult? Function(String error)? error,
-    TResult? Function(int? pageNumber)? pageChanged,
+    TResult? Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult? Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -1012,7 +1012,7 @@ class _$errorImpl implements _error {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult Function(String error)? error,
-    TResult Function(int? pageNumber)? pageChanged,
+    TResult Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -1119,7 +1119,7 @@ abstract class _$$PageChangedImplCopyWith<$Res> {
           _$PageChangedImpl value, $Res Function(_$PageChangedImpl) then) =
       __$$PageChangedImplCopyWithImpl<$Res>;
   @useResult
-  $Res call({int? pageNumber});
+  $Res call({int? pageNumber, int layoutSequence});
 }
 
 /// @nodoc
@@ -1136,12 +1136,17 @@ class __$$PageChangedImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? pageNumber = freezed,
+    Object? layoutSequence = null,
   }) {
     return _then(_$PageChangedImpl(
       pageNumber: freezed == pageNumber
           ? _value.pageNumber
           : pageNumber // ignore: cast_nullable_to_non_nullable
               as int?,
+      layoutSequence: null == layoutSequence
+          ? _value.layoutSequence
+          : layoutSequence // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
@@ -1149,14 +1154,17 @@ class __$$PageChangedImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$PageChangedImpl implements _PageChanged {
-  const _$PageChangedImpl({this.pageNumber});
+  const _$PageChangedImpl({this.pageNumber, this.layoutSequence = 0});
 
   @override
   final int? pageNumber;
+  @override
+  @JsonKey()
+  final int layoutSequence;
 
   @override
   String toString() {
-    return 'EpubViewerState.pageChanged(pageNumber: $pageNumber)';
+    return 'EpubViewerState.pageChanged(pageNumber: $pageNumber, layoutSequence: $layoutSequence)';
   }
 
   @override
@@ -1165,11 +1173,13 @@ class _$PageChangedImpl implements _PageChanged {
         (other.runtimeType == runtimeType &&
             other is _$PageChangedImpl &&
             (identical(other.pageNumber, pageNumber) ||
-                other.pageNumber == pageNumber));
+                other.pageNumber == pageNumber) &&
+            (identical(other.layoutSequence, layoutSequence) ||
+                other.layoutSequence == layoutSequence));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, pageNumber);
+  int get hashCode => Object.hash(runtimeType, pageNumber, layoutSequence);
 
   /// Create a copy of EpubViewerState
   /// with the given fields replaced by the non-null parameter values.
@@ -1188,7 +1198,7 @@ class _$PageChangedImpl implements _PageChanged {
             List<EpubChapter>? tocTreeList)
         loaded,
     required TResult Function(String error) error,
-    required TResult Function(int? pageNumber) pageChanged,
+    required TResult Function(int? pageNumber, int layoutSequence) pageChanged,
     required TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -1209,7 +1219,7 @@ class _$PageChangedImpl implements _PageChanged {
             Map<int, List<String>> pageHighlights)
         contentHighlighted,
   }) {
-    return pageChanged(pageNumber);
+    return pageChanged(pageNumber, layoutSequence);
   }
 
   @override
@@ -1221,7 +1231,7 @@ class _$PageChangedImpl implements _PageChanged {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult? Function(String error)? error,
-    TResult? Function(int? pageNumber)? pageChanged,
+    TResult? Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult? Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -1241,7 +1251,7 @@ class _$PageChangedImpl implements _PageChanged {
             Map<int, List<String>> pageHighlights)?
         contentHighlighted,
   }) {
-    return pageChanged?.call(pageNumber);
+    return pageChanged?.call(pageNumber, layoutSequence);
   }
 
   @override
@@ -1253,7 +1263,7 @@ class _$PageChangedImpl implements _PageChanged {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult Function(String error)? error,
-    TResult Function(int? pageNumber)? pageChanged,
+    TResult Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -1275,7 +1285,7 @@ class _$PageChangedImpl implements _PageChanged {
     required TResult orElse(),
   }) {
     if (pageChanged != null) {
-      return pageChanged(pageNumber);
+      return pageChanged(pageNumber, layoutSequence);
     }
     return orElse();
   }
@@ -1343,9 +1353,11 @@ class _$PageChangedImpl implements _PageChanged {
 }
 
 abstract class _PageChanged implements EpubViewerState {
-  const factory _PageChanged({final int? pageNumber}) = _$PageChangedImpl;
+  const factory _PageChanged(
+      {final int? pageNumber, final int layoutSequence}) = _$PageChangedImpl;
 
   int? get pageNumber;
+  int get layoutSequence;
 
   /// Create a copy of EpubViewerState
   /// with the given fields replaced by the non-null parameter values.
@@ -1478,7 +1490,8 @@ class _$StyleChangedImpl implements _StyleChanged {
                 other.fontFamily == fontFamily) &&
             (identical(other.backgroundColor, backgroundColor) ||
                 other.backgroundColor == backgroundColor) &&
-            (identical(other.useCustomBackgroundColor, useCustomBackgroundColor) ||
+            (identical(
+                    other.useCustomBackgroundColor, useCustomBackgroundColor) ||
                 other.useCustomBackgroundColor == useCustomBackgroundColor) &&
             (identical(other.useUniformTextColor, useUniformTextColor) ||
                 other.useUniformTextColor == useUniformTextColor) &&
@@ -1517,7 +1530,7 @@ class _$StyleChangedImpl implements _StyleChanged {
             List<EpubChapter>? tocTreeList)
         loaded,
     required TResult Function(String error) error,
-    required TResult Function(int? pageNumber) pageChanged,
+    required TResult Function(int? pageNumber, int layoutSequence) pageChanged,
     required TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -1538,8 +1551,15 @@ class _$StyleChangedImpl implements _StyleChanged {
             Map<int, List<String>> pageHighlights)
         contentHighlighted,
   }) {
-    return styleChanged(fontSize, lineHeight, fontFamily, backgroundColor,
-        useCustomBackgroundColor, useUniformTextColor, uniformTextColor, hideArabicDiacritics);
+    return styleChanged(
+        fontSize,
+        lineHeight,
+        fontFamily,
+        backgroundColor,
+        useCustomBackgroundColor,
+        useUniformTextColor,
+        uniformTextColor,
+        hideArabicDiacritics);
   }
 
   @override
@@ -1551,7 +1571,7 @@ class _$StyleChangedImpl implements _StyleChanged {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult? Function(String error)? error,
-    TResult? Function(int? pageNumber)? pageChanged,
+    TResult? Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult? Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -1571,8 +1591,15 @@ class _$StyleChangedImpl implements _StyleChanged {
             Map<int, List<String>> pageHighlights)?
         contentHighlighted,
   }) {
-    return styleChanged?.call(fontSize, lineHeight, fontFamily, backgroundColor,
-        useCustomBackgroundColor, useUniformTextColor, uniformTextColor, hideArabicDiacritics);
+    return styleChanged?.call(
+        fontSize,
+        lineHeight,
+        fontFamily,
+        backgroundColor,
+        useCustomBackgroundColor,
+        useUniformTextColor,
+        uniformTextColor,
+        hideArabicDiacritics);
   }
 
   @override
@@ -1584,7 +1611,7 @@ class _$StyleChangedImpl implements _StyleChanged {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult Function(String error)? error,
-    TResult Function(int? pageNumber)? pageChanged,
+    TResult Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -1606,8 +1633,15 @@ class _$StyleChangedImpl implements _StyleChanged {
     required TResult orElse(),
   }) {
     if (styleChanged != null) {
-      return styleChanged(fontSize, lineHeight, fontFamily, backgroundColor,
-          useCustomBackgroundColor, useUniformTextColor, uniformTextColor, hideArabicDiacritics);
+      return styleChanged(
+          fontSize,
+          lineHeight,
+          fontFamily,
+          backgroundColor,
+          useCustomBackgroundColor,
+          useUniformTextColor,
+          uniformTextColor,
+          hideArabicDiacritics);
     }
     return orElse();
   }
@@ -1775,7 +1809,7 @@ class _$BookmarkAddedImpl implements _BookmarkAdded {
             List<EpubChapter>? tocTreeList)
         loaded,
     required TResult Function(String error) error,
-    required TResult Function(int? pageNumber) pageChanged,
+    required TResult Function(int? pageNumber, int layoutSequence) pageChanged,
     required TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -1808,7 +1842,7 @@ class _$BookmarkAddedImpl implements _BookmarkAdded {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult? Function(String error)? error,
-    TResult? Function(int? pageNumber)? pageChanged,
+    TResult? Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult? Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -1840,7 +1874,7 @@ class _$BookmarkAddedImpl implements _BookmarkAdded {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult Function(String error)? error,
-    TResult Function(int? pageNumber)? pageChanged,
+    TResult Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -2015,7 +2049,7 @@ class _$HistoryAddedImpl implements _HistoryAdded {
             List<EpubChapter>? tocTreeList)
         loaded,
     required TResult Function(String error) error,
-    required TResult Function(int? pageNumber) pageChanged,
+    required TResult Function(int? pageNumber, int layoutSequence) pageChanged,
     required TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -2048,7 +2082,7 @@ class _$HistoryAddedImpl implements _HistoryAdded {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult? Function(String error)? error,
-    TResult? Function(int? pageNumber)? pageChanged,
+    TResult? Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult? Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -2080,7 +2114,7 @@ class _$HistoryAddedImpl implements _HistoryAdded {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult Function(String error)? error,
-    TResult Function(int? pageNumber)? pageChanged,
+    TResult Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -2265,7 +2299,7 @@ class _$SearchResultsFoundImpl implements _SearchResultsFound {
             List<EpubChapter>? tocTreeList)
         loaded,
     required TResult Function(String error) error,
-    required TResult Function(int? pageNumber) pageChanged,
+    required TResult Function(int? pageNumber, int layoutSequence) pageChanged,
     required TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -2298,7 +2332,7 @@ class _$SearchResultsFoundImpl implements _SearchResultsFound {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult? Function(String error)? error,
-    TResult? Function(int? pageNumber)? pageChanged,
+    TResult? Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult? Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -2330,7 +2364,7 @@ class _$SearchResultsFoundImpl implements _SearchResultsFound {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult Function(String error)? error,
-    TResult Function(int? pageNumber)? pageChanged,
+    TResult Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -2480,7 +2514,7 @@ class _$BookmarkPresentImpl implements _BookmarkPresent {
             List<EpubChapter>? tocTreeList)
         loaded,
     required TResult Function(String error) error,
-    required TResult Function(int? pageNumber) pageChanged,
+    required TResult Function(int? pageNumber, int layoutSequence) pageChanged,
     required TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -2513,7 +2547,7 @@ class _$BookmarkPresentImpl implements _BookmarkPresent {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult? Function(String error)? error,
-    TResult? Function(int? pageNumber)? pageChanged,
+    TResult? Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult? Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -2545,7 +2579,7 @@ class _$BookmarkPresentImpl implements _BookmarkPresent {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult Function(String error)? error,
-    TResult Function(int? pageNumber)? pageChanged,
+    TResult Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -2685,7 +2719,7 @@ class _$BookmarkAbsentImpl implements _BookmarkAbsent {
             List<EpubChapter>? tocTreeList)
         loaded,
     required TResult Function(String error) error,
-    required TResult Function(int? pageNumber) pageChanged,
+    required TResult Function(int? pageNumber, int layoutSequence) pageChanged,
     required TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -2718,7 +2752,7 @@ class _$BookmarkAbsentImpl implements _BookmarkAbsent {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult? Function(String error)? error,
-    TResult? Function(int? pageNumber)? pageChanged,
+    TResult? Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult? Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -2750,7 +2784,7 @@ class _$BookmarkAbsentImpl implements _BookmarkAbsent {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult Function(String error)? error,
-    TResult Function(int? pageNumber)? pageChanged,
+    TResult Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -2959,7 +2993,7 @@ class _$ContentHighlightedImpl implements _ContentHighlighted {
             List<EpubChapter>? tocTreeList)
         loaded,
     required TResult Function(String error) error,
-    required TResult Function(int? pageNumber) pageChanged,
+    required TResult Function(int? pageNumber, int layoutSequence) pageChanged,
     required TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -2992,7 +3026,7 @@ class _$ContentHighlightedImpl implements _ContentHighlighted {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult? Function(String error)? error,
-    TResult? Function(int? pageNumber)? pageChanged,
+    TResult? Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult? Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
@@ -3024,7 +3058,7 @@ class _$ContentHighlightedImpl implements _ContentHighlighted {
             List<EpubChapter>? tocTreeList)?
         loaded,
     TResult Function(String error)? error,
-    TResult Function(int? pageNumber)? pageChanged,
+    TResult Function(int? pageNumber, int layoutSequence)? pageChanged,
     TResult Function(
             FontSizeCustom? fontSize,
             LineHeightCustom? lineHeight,
