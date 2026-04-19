@@ -79,6 +79,8 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
   List<SearchModel> _currentSearchResults = [];
   Map<int, List<String>> _pageHighlights = {}; // Map of page index to list of highlight IDs
   Map<int, int> _highlightIndexPerPage = {}; // Map of page index to current highlight index on that page
+  /// Set after a full [highlightContent] pass; used to skip rebuilding all spine HTML on next/prev page jumps.
+  String _lastSearchHighlightNormalizedTerm = '';
 
   /// After search navigation / [emit(loaded)] refresh, the spine list can briefly still
   /// report the previous item as visible; ignore scroll-driven page updates so
@@ -518,6 +520,7 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
         _originalContent = [];
         _pageHighlights = {};
         _highlightIndexPerPage = {};
+        _lastSearchHighlightNormalizedTerm = '';
         // Emit loaded state with original content
         emit(EpubViewerState.loaded(
           content: _cachedContent,
@@ -592,6 +595,8 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
         highlightContent(
           searchResults[_currentSearchIndex].pageIndex,
           _currentSearchTerm,
+          highlightIndexOnTargetPage: 0,
+          reuseExistingHighlights: true,
         );
       }
     }
@@ -604,9 +609,8 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
 
     final currentResult = searchResults[_currentSearchIndex];
     final currentPageIndex = currentResult.pageIndex - 1;
-    final highlightsOnCurrentPage = _pageHighlights[currentPageIndex] ?? [];
     final currentHighlightIndex = _highlightIndexPerPage[currentPageIndex] ?? 0;
-    
+
     // Check if there's a previous highlight on the current page
     if (currentHighlightIndex > 0) {
       // Move to previous highlight on same page
@@ -628,13 +632,14 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
         _currentSearchIndex = prevIndex;
         final previousPageIndex = searchResults[_currentSearchIndex].pageIndex - 1;
         final highlightsOnPreviousPage = _pageHighlights[previousPageIndex] ?? [];
-        if (highlightsOnPreviousPage.isNotEmpty) {
-          _highlightIndexPerPage[previousPageIndex] =
-              highlightsOnPreviousPage.length - 1;
-        }
+        final int targetHighlightIndex = highlightsOnPreviousPage.isNotEmpty
+            ? highlightsOnPreviousPage.length - 1
+            : 0;
         highlightContent(
           searchResults[_currentSearchIndex].pageIndex,
           _currentSearchTerm,
+          highlightIndexOnTargetPage: targetHighlightIndex,
+          reuseExistingHighlights: highlightsOnPreviousPage.isNotEmpty,
         );
       }
     }
@@ -919,7 +924,58 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
     }
   }
 
-  Future<void> highlightContent(int pageIndex, String searchTerm) async {
+  bool _canReuseSearchHighlights(String normalizedSearchTerm, int targetPageIndex) {
+    if (_lastSearchHighlightNormalizedTerm.isEmpty ||
+        normalizedSearchTerm != _lastSearchHighlightNormalizedTerm) {
+      return false;
+    }
+    final spine = _spineHtmlContent;
+    if (spine == null || spine.isEmpty) return false;
+    if (_cachedContent.isEmpty || _cachedContent.length != spine.length) {
+      return false;
+    }
+    final anchors = _pageHighlights[targetPageIndex];
+    return anchors != null && anchors.isNotEmpty;
+  }
+
+  Future<void> _reuseSearchHighlightJump({
+    required int targetPageIndex,
+    required int highlightIndexOnTargetPage,
+  }) async {
+    final anchors = _pageHighlights[targetPageIndex]!;
+    final idx = highlightIndexOnTargetPage.clamp(0, anchors.length - 1);
+    _highlightIndexPerPage[targetPageIndex] = idx;
+    if (_currentPage != targetPageIndex) {
+      _currentPage = targetPageIndex;
+    }
+    _applyActiveSearchVisualInPlace(_cachedContent);
+    _cachedContent = List<String>.from(_cachedContent);
+
+    if (kDebugMode) {
+      final activeId =
+          anchors.isNotEmpty && idx < anchors.length ? anchors[idx] : null;
+      debugPrint(
+        '[epub_nav] highlightContent reuse jump: targetSpineIndex=$targetPageIndex '
+        'activeIndex=$idx activeId=$activeId _currentPage=$_currentPage',
+      );
+    }
+
+    emit(EpubViewerState.contentHighlighted(
+      content: _cachedContent,
+      highlightedIndex: targetPageIndex,
+      pageHighlights: _pageHighlights,
+    ));
+    _suppressScrollPageSyncUntil =
+        DateTime.now().add(const Duration(milliseconds: 450));
+    await Future<void>.delayed(Duration.zero);
+  }
+
+  Future<void> highlightContent(
+    int pageIndex,
+    String searchTerm, {
+    int? highlightIndexOnTargetPage,
+    bool reuseExistingHighlights = false,
+  }) async {
     if (_spineHtmlContent == null || _spineHtmlContent!.isEmpty) return;
 
     // Decode HTML entities and remove extra HTML tags from searchTerm
@@ -927,6 +983,18 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
 
     // Normalize the search term by removing diacritics
     final normalizedSearchTerm = persistence.searchService.removeArabicDiacritics(decodedSearchTerm);
+
+    final int targetPageIndex = pageIndex - 1;
+
+    if (reuseExistingHighlights &&
+        highlightIndexOnTargetPage != null &&
+        _canReuseSearchHighlights(normalizedSearchTerm, targetPageIndex)) {
+      await _reuseSearchHighlightJump(
+        targetPageIndex: targetPageIndex,
+        highlightIndexOnTargetPage: highlightIndexOnTargetPage,
+      );
+      return;
+    }
 
     final bool verboseAllahDebug = normalizedSearchTerm.trim() == 'الله';
     if (verboseAllahDebug) {
@@ -981,11 +1049,14 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
 
     // Store page highlights
     _pageHighlights = pageHighlights;
-    
-    // Reset highlight index for the target page
-    final targetPageIndex = pageIndex - 1;
-    _highlightIndexPerPage[targetPageIndex] = 0;
-    
+
+    final anchorsOnTarget = pageHighlights[targetPageIndex] ?? const <String>[];
+    final int rawIndex = highlightIndexOnTargetPage ?? 0;
+    final int resolvedHighlightIndex = anchorsOnTarget.isEmpty
+        ? 0
+        : rawIndex.clamp(0, anchorsOnTarget.length - 1);
+    _highlightIndexPerPage[targetPageIndex] = resolvedHighlightIndex;
+
     // Update current page if needed
     if (_currentPage != targetPageIndex) {
       _currentPage = targetPageIndex;
@@ -995,6 +1066,7 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
 
     // Cache highlighted content
     _cachedContent = updatedContent;
+    _lastSearchHighlightNormalizedTerm = normalizedSearchTerm;
 
     if (kDebugMode) {
       final idsHere = pageHighlights[targetPageIndex] ?? const <String>[];
