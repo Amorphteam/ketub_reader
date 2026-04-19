@@ -79,6 +79,11 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
   List<SearchModel> _currentSearchResults = [];
   Map<int, List<String>> _pageHighlights = {}; // Map of page index to list of highlight IDs
   Map<int, int> _highlightIndexPerPage = {}; // Map of page index to current highlight index on that page
+
+  /// After search navigation / [emit(loaded)] refresh, the spine list can briefly still
+  /// report the previous item as visible; ignore scroll-driven page updates so
+  /// [_currentPage] stays aligned with the active search result.
+  DateTime? _suppressScrollPageSyncUntil;
   
   // Debounce timer for iOS slider
   Timer? _iosSliderDebounceTimer;
@@ -111,16 +116,92 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
   List<SearchModel> get currentSearchResults => _currentSearchResults;
   Map<int, List<String>> get pageHighlights => _pageHighlights;
   int getHighlightIndexForPage(int pageIndex) => _highlightIndexPerPage[pageIndex] ?? 0;
+
+  /// Spine index for the active search hit (from [_currentSearchIndex]), not from
+  /// scroll-reported [_currentPage] which can lag after [emit(loaded)].
+  int _resolvedSpineIndexForActiveSearchHit() {
+    final n = _cachedContent.length;
+    if (n == 0) return 0;
+    final maxIndex = n - 1;
+    if (_currentSearchTerm.isEmpty || _currentSearchResults.isEmpty) {
+      return _currentPage.clamp(0, maxIndex);
+    }
+    final i = _currentSearchIndex.clamp(0, _currentSearchResults.length - 1);
+    return (_currentSearchResults[i].pageIndex - 1).clamp(0, maxIndex);
+  }
+
+  void _alignSpinePageToCurrentSearchResult(List<SearchModel> searchResults) {
+    if (searchResults.isEmpty || _cachedContent.isEmpty) return;
+    final i = _currentSearchIndex.clamp(0, searchResults.length - 1);
+    final spine = searchResults[i].pageIndex - 1;
+    final maxIndex = _cachedContent.length - 1;
+    if (spine >= 0 && spine <= maxIndex) {
+      _currentPage = spine;
+    }
+  }
+
   String? getCurrentHighlightId() {
-    final highlights = _pageHighlights[_currentPage];
+    final spine = _resolvedSpineIndexForActiveSearchHit();
+    final highlights = _pageHighlights[spine];
     if (highlights == null || highlights.isEmpty) return null;
-    final highlightIndex = _highlightIndexPerPage[_currentPage] ?? 0;
+    final highlightIndex = _highlightIndexPerPage[spine] ?? 0;
     if (highlightIndex >= 0 && highlightIndex < highlights.length) {
       return highlights[highlightIndex];
     }
     return highlights.first;
   }
 
+  /// Strip [data-epub-active-search] from HTML (all pages) before re-applying.
+  static String _stripActiveSearchMarker(String html) {
+    return html.replaceAll(
+      RegExp(r'\sdata-epub-active-search="1"', caseSensitive: false),
+      '',
+    );
+  }
+
+  /// Put `data-epub-active-search="1"` on the **first** opening tag that has [highlightDomId].
+  static String _injectActiveSearchMarker(String html, String highlightDomId) {
+    if (highlightDomId.isEmpty) return html;
+    final re = RegExp(
+      r'(<\w+[^>]*\bid="' + RegExp.escape(highlightDomId) + r'"[^>]*)(>)',
+      caseSensitive: false,
+    );
+    final m = re.firstMatch(html);
+    if (m == null) return html;
+    final full = m.group(0)!;
+    if (full.toLowerCase().contains('data-epub-active-search')) return html;
+    return html.replaceFirst(full, '${m.group(1)} data-epub-active-search="1"${m.group(2)}');
+  }
+
+  /// Highlights the **paragraph/block** that owns the current hit (`id="highlight_n"`).
+  void _applyActiveSearchVisualInPlace(List<String> pages) {
+    if (_currentSearchTerm.isEmpty || pages.isEmpty) return;
+    final activeId = getCurrentHighlightId();
+    for (var i = 0; i < pages.length; i++) {
+      pages[i] = _stripActiveSearchMarker(pages[i]);
+    }
+    if (activeId != null) {
+      final pg = _resolvedSpineIndexForActiveSearchHit().clamp(0, pages.length - 1);
+      pages[pg] = _injectActiveSearchMarker(pages[pg], activeId);
+    }
+  }
+
+  void _emitSearchVisualRefresh() {
+    _currentPage = _resolvedSpineIndexForActiveSearchHit();
+    _applyActiveSearchVisualInPlace(_cachedContent);
+    // New outer list for Bloc/UI cache invalidation, and assign it to
+    // `_cachedContent` so the next in-place marker pass mutates the same list
+    // the UI last received. Otherwise `emit(List.from(_cachedContent))` leaves
+    // state holding a different list whose string slots never get updated.
+    _cachedContent = List<String>.from(_cachedContent);
+    emit(EpubViewerState.loaded(
+      content: _cachedContent,
+      epubTitle: _cachedBookTitle,
+      tocTreeList: _tocTreeList,
+    ));
+    _suppressScrollPageSyncUntil =
+        DateTime.now().add(const Duration(milliseconds: 450));
+  }
 
   Future<void> checkBookmark(String bookPath, String pageIndex) async {
     try {
@@ -234,19 +315,17 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
       if (assetPath.contains('0.epub')) {
         _isAboutUsBook = true;
       }
-      
-      emit(const EpubViewerState.loading());
-      await Future.delayed(const Duration(milliseconds: 200));
 
-      emit(EpubViewerState.loaded(content: _spineHtmlContent!,
-        epubTitle: _bookTitle ?? '',
-        tocTreeList: _tocTreeList,),);
-      
-      // Wait a bit for the state handler to run and set up the jump flag
-      await Future.delayed(const Duration(milliseconds: 100));
-      
-      // Handle post-load navigation (TOC chapter, initial page, etc.)
+      // Jump to bookmark / history / search page / TOC / deep link *before* emitting
+      // `loaded`, so the first paint already has the correct `currentPage` and listeners
+      // (e.g. external search highlight) do not need arbitrary delays.
       await handlePostLoadNavigation();
+
+      emit(EpubViewerState.loaded(
+        content: _spineHtmlContent!,
+        epubTitle: _bookTitle ?? '',
+        tocTreeList: _tocTreeList,
+      ),);
       
       // Check bookmark after loading if we have a book path
       if (_assetPath != null && _currentPage >= 0) {
@@ -402,6 +481,10 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
   /// Update current page from scroll position (debounced)
   Timer? _scrollDebounceTimer;
   void updateCurrentPageFromScroll(int pageIndex) {
+    final until = _suppressScrollPageSyncUntil;
+    if (until != null && DateTime.now().isBefore(until)) {
+      return;
+    }
     if (pageIndex != _currentPage) {
       _currentPage = pageIndex;
       _emitPageChanged(_currentPage);
@@ -428,9 +511,10 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
     _isSearchOpen = open;
     
     if (!open) {
+      _suppressScrollPageSyncUntil = null;
       // Restore original content when search is closed
       if (_originalContent.isNotEmpty) {
-        _cachedContent = _originalContent;
+        _cachedContent = List<String>.from(_originalContent);
         _originalContent = [];
         _pageHighlights = {};
         _highlightIndexPerPage = {};
@@ -454,6 +538,7 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
   void _emitCurrentStateForUIUpdate() {
     // Re-emit the current state to trigger a rebuild
     if (_cachedContent.isNotEmpty) {
+      _cachedContent = List<String>.from(_cachedContent);
       emit(EpubViewerState.loaded(
         content: _cachedContent,
         epubTitle: _cachedBookTitle,
@@ -478,7 +563,8 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
   /// Navigate to next search result
   void navigateToNextSearchResult(List<SearchModel> searchResults) {
     if (searchResults.isEmpty) return;
-    
+    _alignSpinePageToCurrentSearchResult(searchResults);
+
     final currentResult = searchResults[_currentSearchIndex];
     final currentPageIndex = currentResult.pageIndex - 1;
     final highlightsOnCurrentPage = _pageHighlights[currentPageIndex] ?? [];
@@ -490,7 +576,7 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
       _highlightIndexPerPage[currentPageIndex] = currentHighlightIndex + 1;
       // Update current page to ensure we're tracking the right page
       _currentPage = currentPageIndex;
-      // Emit pageChanged to trigger scroll to highlight (even though page number is same)
+      _emitSearchVisualRefresh();
       _emitPageChanged(currentPageIndex);
       return;
     }
@@ -514,7 +600,8 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
   /// Navigate to previous search result
   void navigateToPreviousSearchResult(List<SearchModel> searchResults) {
     if (searchResults.isEmpty) return;
-    
+    _alignSpinePageToCurrentSearchResult(searchResults);
+
     final currentResult = searchResults[_currentSearchIndex];
     final currentPageIndex = currentResult.pageIndex - 1;
     final highlightsOnCurrentPage = _pageHighlights[currentPageIndex] ?? [];
@@ -526,7 +613,7 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
       _highlightIndexPerPage[currentPageIndex] = currentHighlightIndex - 1;
       // Update current page to ensure we're tracking the right page
       _currentPage = currentPageIndex;
-      // Emit pageChanged to trigger scroll to highlight (even though page number is same)
+      _emitSearchVisualRefresh();
       _emitPageChanged(currentPageIndex);
       return;
     }
@@ -885,6 +972,11 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
 
       // Update global counter by counting the actual matches found in this page
       globalCounter += pageMatchCount;
+
+      // Yield every page so the UI thread can repaint (spinner / overlay stay fluid).
+      if (pageIdx > 0) {
+        await Future<void>.delayed(Duration.zero);
+      }
     }
 
     // Store page highlights
@@ -899,8 +991,23 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
       _currentPage = targetPageIndex;
     }
 
+    _applyActiveSearchVisualInPlace(updatedContent);
+
     // Cache highlighted content
     _cachedContent = updatedContent;
+
+    if (kDebugMode) {
+      final idsHere = pageHighlights[targetPageIndex] ?? const <String>[];
+      final idx = _highlightIndexPerPage[targetPageIndex] ?? 0;
+      final activeId =
+          idsHere.isNotEmpty && idx < idsHere.length ? idsHere[idx] : null;
+      debugPrint(
+        '[epub_nav] highlightContent emit: targetSpineIndex=$targetPageIndex '
+        '(param pageIndex=$pageIndex 1-based) '
+        'anchorIdsOnTargetPage=${idsHere.length} activeIndex=$idx activeId=$activeId '
+        'allIds=$idsHere _currentPage=$_currentPage',
+      );
+    }
 
     // Emit the new state with updated content and page highlights map
     emit(EpubViewerState.contentHighlighted(
@@ -908,6 +1015,8 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
         highlightedIndex: targetPageIndex,
         pageHighlights: pageHighlights
     ));
+    _suppressScrollPageSyncUntil =
+        DateTime.now().add(const Duration(milliseconds: 450));
   }
 
   String _applyHighlightingUsingMapping(String originalContent, String normalizedContent, String normalizedSearchTerm, int globalCounter) {

@@ -29,6 +29,9 @@ class DefaultSearchService implements SearchService {
         );
         match = _findMatch(plainText, normalizedSearch, match.end);
       }
+      if (i > 0) {
+        await Future<void>.delayed(Duration.zero);
+      }
     }
 
     return results;

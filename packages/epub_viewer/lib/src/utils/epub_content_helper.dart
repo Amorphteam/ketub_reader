@@ -15,6 +15,8 @@ class HtmlFileInfo {
 
 Future<EpubBook> loadEpubFromAsset(String assetPath) async {
   final ByteData data = await rootBundle.load(assetPath);
+  // Let the loading indicator paint at least once before heavy zip parse.
+  await Future<void>.delayed(Duration.zero);
   final List<int> bytes = data.buffer.asUint8List();
   final EpubBook epubBook = await EpubReader.readBook(Uint8List.fromList(bytes));
   return epubBook;
@@ -50,6 +52,10 @@ Future<List<HtmlFileInfo>> extractHtmlContentWithEmbeddedImages(EpubBook epubBoo
     for (final entry in htmlFiles.entries) {
       final String htmlContent = embedImagesInHtmlContent(entry.value, images);
       htmlContentList.add(HtmlFileInfo(entry.key, htmlContent, index++));
+      // Yield every file after the first so the loading spinner can repaint.
+      if (index > 1) {
+        await Future<void>.delayed(Duration.zero);
+      }
     }
   }
 

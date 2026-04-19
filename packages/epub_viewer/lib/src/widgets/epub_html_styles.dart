@@ -413,6 +413,12 @@ class EpubHtmlStyles {
         ),
       ),
       'mark': Style(backgroundColor: Colors.yellow),
+      // Current in-reader search hit: injected on the opening tag that carries id="highlight_*".
+      '[data-epub-active-search="1"]': Style(
+        backgroundColor:
+            isDarkMode ? const Color(0xFF3E2E1F) : const Color(0xFFFFF3CD),
+        padding: HtmlPaddings.symmetric(vertical: 6, horizontal: 4),
+      ),
       };
 
     // If customStyleBuilder is provided, use it to build dynamic custom styles

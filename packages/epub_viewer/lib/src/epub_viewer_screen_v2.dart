@@ -23,6 +23,12 @@ import 'widgets/toc_tree_list_widget.dart';
 
 export 'widgets/epub_content_list.dart' show CustomStyleBuilder;
 
+void _epubNavDebugLog(String message) {
+  if (kDebugMode) {
+    debugPrint('[epub_nav] $message');
+  }
+}
+
 class EpubViewerScreenV2 extends StatefulWidget {
   const EpubViewerScreenV2({
     super.key,
@@ -85,6 +91,8 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
 
   bool _hasLoadedEpub = false;
   bool _hasHandledInitialPageJump = false;
+  /// Full-screen busy layer while the first in-reader search/highlight runs (e.g. from global search).
+  bool _openingExternalSearch = false;
   EpubViewerCubit? _cubit; // Cache cubit reference for safe disposal
   Timer? _scrollDebounceTimer; // Debounce scroll listener to reduce emissions
   bool _isPageChangeFromScroll = false; // Track if page change came from scroll
@@ -295,6 +303,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
                   showBottomBar: widget.showBottomBar && cubit.isSliderVisible,
                 ),
                 _buildSearchNavigation(stateData),
+                if (_openingExternalSearch) _buildOpeningBusyOverlay(context),
               ],
             ),
           ),
@@ -320,32 +329,30 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
           // which is called automatically after loading
           // But we still need to handle search and deep links here
 
-          // Handle search model if provided (external search)
+          // Handle search model if provided (external search).
+          // Post-load navigation runs before `loaded` in the cubit; one frame is enough
+          // for the scrollable list to attach before searching/highlighting.
           final initialSearchQuery = widget.entryData.searchQuery;
           if (initialSearchQuery != null && initialSearchQuery.isNotEmpty) {
-            // Wait a bit for content to be fully loaded and initial navigation to complete
-            Future.delayed(const Duration(milliseconds: 500), () {
-              if (mounted) {
-                _navigationCoordinator.requestJump();
-                cubit.searchUsingHtmlList(initialSearchQuery);
-              }
+            setState(() => _openingExternalSearch = true);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              _navigationCoordinator.requestJump();
+              cubit.searchUsingHtmlList(initialSearchQuery);
             });
           }
 
-          // Handle deep link file name jump after content loads
+          // Handle deep link file name jump after first layout (if still needed).
           final deepLinkFileName = widget.entryData.deepLinkChapterFileName;
           if (deepLinkFileName != null && deepLinkFileName.isNotEmpty) {
             final String fileName = deepLinkFileName;
-            // Wait for initial navigation to complete
-            Future.delayed(const Duration(milliseconds: 500), () {
-              if (mounted) {
-                _navigationCoordinator.requestJump();
-                // Single jump: cubit retries `Text/` only if the first path fails.
-                cubit.jumpToPage(
-                  chapterFileName: fileName,
-                  tryChapterTextPrefixFallback: true,
-                );
-              }
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              _navigationCoordinator.requestJump();
+              cubit.jumpToPage(
+                chapterFileName: fileName,
+                tryChapterTextPrefixFallback: true,
+              );
             });
           }
         }
@@ -354,10 +361,14 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
         cubit.loadUserPreferences();
       },
       searchResultsFound: (searchResults) {
-        // Check if there are no search results
         if (searchResults.isEmpty) {
+          if (_openingExternalSearch && mounted) {
+            setState(() => _openingExternalSearch = false);
+          }
           // Get the search term from the text controller
-          final searchTerm = textEditingController.text;
+          final searchTerm = textEditingController.text.isNotEmpty
+              ? textEditingController.text
+              : (widget.entryData.searchQuery ?? '');
           final displayQuery = searchTerm.isEmpty ? '...' : searchTerm;
           
           // Show snackbar to inform user that no results were found
@@ -376,6 +387,17 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
         // No additional action needed here when results are found
       },
       contentHighlighted: (content, highlightedIndex, pageHighlights) {
+        if (_openingExternalSearch && mounted) {
+          setState(() => _openingExternalSearch = false);
+        }
+        final cubit0 = context.read<EpubViewerCubit>();
+        final idsOnPage = pageHighlights[highlightedIndex];
+        _epubNavDebugLog(
+          'contentHighlighted: spineIndex=$highlightedIndex '
+          'cubit.currentPage=${cubit0.currentPage} '
+          'currentHighlightId=${cubit0.getCurrentHighlightId()} '
+          'anchorIdsOnThisPage=${idsOnPage?.length ?? 0} ids=$idsOnPage',
+        );
         // Legacy Masaha: always new GlobalKey + jumpTo for highlight flows (same page ok).
         _navigationCoordinator.requestJump();
         _scrollToPage(highlightedIndex, legacyMasahaHighlightJump: true);
@@ -384,7 +406,15 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
           final cubit = context.read<EpubViewerCubit>();
           final highlightId = cubit.getCurrentHighlightId();
           if (highlightId != null) {
+            _epubNavDebugLog(
+              'contentHighlighted postFrame: will _scrollToHighlight id=$highlightId',
+            );
             _scrollToHighlight(highlightId);
+          } else {
+            _epubNavDebugLog(
+              'contentHighlighted postFrame: getCurrentHighlightId() is null — '
+              'no in-page ensureVisible; you likely only see spine page top.',
+            );
           }
         });
       },
@@ -402,6 +432,10 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
         if (pageNumber != null && !_isPageChangeFromScroll) {
           final cubit = context.read<EpubViewerCubit>();
           final highlightId = cubit.getCurrentHighlightId();
+          _epubNavDebugLog(
+            'pageChanged (programmatic): spineIndex=$pageNumber '
+            'highlightId=$highlightId searchResults=${cubit.currentSearchResults.length}',
+          );
           _navigationCoordinator.requestJump();
           _scrollToPage(
             pageNumber,
@@ -411,9 +445,16 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
           if (highlightId != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
+                _epubNavDebugLog(
+                  'pageChanged postFrame: _scrollToHighlight id=$highlightId',
+                );
                 _scrollToHighlight(highlightId);
               }
             });
+          } else {
+            _epubNavDebugLog(
+              'pageChanged: no highlightId — spine jump only, no ensureVisible to mark.',
+            );
           }
         } else if (pageNumber != null && _isPageChangeFromScroll) {
           final cubit = context.read<EpubViewerCubit>();
@@ -430,6 +471,9 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
         }
       },
       error: (error) {
+        if (_openingExternalSearch && mounted) {
+          setState(() => _openingExternalSearch = false);
+        }
         if (error.toLowerCase().contains('translation') ||
             error.contains('No translation content found')) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -464,8 +508,18 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
       pageChanged = _navigationCoordinator.updateCurrentPageKey(pageNumber);
     }
 
+    _epubNavDebugLog(
+      '_scrollToPage: spineIndex=$pageNumber legacyHighlight=$legacyMasahaHighlightJump '
+      'highlightOnlySamePage=$highlightOnlySamePage pageKeyChanged=$pageChanged '
+      'listAttached=${itemScrollController.isAttached}',
+    );
+
     if (highlightOnlySamePage) {
       _navigationCoordinator.clearJumpRequest();
+      _epubNavDebugLog(
+        '_scrollToPage: same spine page + highlight — skipped itemScrollController.jumpTo '
+        '(Html key refresh only).',
+      );
       if (mounted) setState(() {});
       return;
     }
@@ -474,6 +528,10 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && itemScrollController.isAttached) {
           _attemptJumpToPage(pageNumber, pageChanged);
+        } else {
+          _epubNavDebugLog(
+            '_scrollToPage: deferred jump aborted (not mounted or list not attached).',
+          );
         }
       });
       return;
@@ -493,6 +551,10 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
     }
 
     try {
+      _epubNavDebugLog(
+        '_attemptJumpToPage: ScrollablePositionedList.jumpTo(index=$pageNumber) '
+        '(outer spine list — shows start of that HTML chunk).',
+      );
       itemScrollController.jumpTo(index: pageNumber);
     } catch (e) {
       debugPrint('Error scrolling to page: $e');
@@ -512,6 +574,49 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
         overlays: SystemUiOverlay.values,
       );
     }
+  }
+
+  Widget _buildOpeningBusyOverlay(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    // Fully opaque so spine content never bleeds through (semi-transparent felt "broken").
+    return Positioned.fill(
+      child: AbsorbPointer(
+        child: Material(
+          color: scheme.surface,
+          elevation: 6,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  RepaintBoundary(
+                    child: CircularProgressIndicator(
+                      color: scheme.primary,
+                      strokeWidth: 3,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'جارٍ البحث في الصفحات وترتيب النتائج',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'يرجى الانتظار.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _handleBackPressed(EpubViewerCubit cubit) {
@@ -537,11 +642,43 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
       child: Container(
         color: stateData.backgroundColor,
         child: state.maybeWhen(
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: Colors.red),
+          loading: () => Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(color: Colors.red),
+                  const SizedBox(height: 20),
+                  Text(
+                    'جارٍ فتح الكتاب…',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'قد يستغرق ذلك لحظات للكتب الكبيرة.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          initial: () => const Center(
-            child: CircularProgressIndicator(),
+          initial: () => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  'جارٍ التحميل…',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
           ),
           orElse: () => _buildContent(
             context,
@@ -775,19 +912,39 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
   /// Multiple matches in one paragraph may share one anchor — missing context is expected.
   void _scrollToHighlight(String highlightId) {
     final currentPageKey = _navigationCoordinator.currentPageKey;
-    if (currentPageKey == null) return;
+    if (currentPageKey == null) {
+      _epubNavDebugLog(
+        '_scrollToHighlight($highlightId): currentPageKey is null — cannot resolve AnchorKey.',
+      );
+      return;
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       try {
-        final anchorContext =
-            AnchorKey.forId(currentPageKey, highlightId)?.currentContext;
+        final cubit = context.read<EpubViewerCubit>();
+        // In-reader search (FAB / result list): jump immediately; no 300ms ease.
+        final bool searchJump = cubit.currentSearchResults.isNotEmpty;
+        final anchorKey = AnchorKey.forId(currentPageKey, highlightId);
+        final anchorContext = anchorKey?.currentContext;
         if (anchorContext != null) {
+          _epubNavDebugLog(
+            '_scrollToHighlight($highlightId): AnchorKey HIT — calling '
+            'Scrollable.ensureVisible (in-page scroll to block/anchor). '
+            'instant=${searchJump ? 'yes' : 'no'}',
+          );
           Scrollable.ensureVisible(
             anchorContext,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
+            duration:
+                searchJump ? Duration.zero : const Duration(milliseconds: 300),
+            curve: searchJump ? Curves.linear : Curves.easeInOut,
             alignment: 0.12,
+          );
+        } else {
+          _epubNavDebugLog(
+            '_scrollToHighlight($highlightId): AnchorKey MISS (no context) — '
+            'flutter_html did not build a widget for this id (duplicate id inline, '
+            'or id only on inner <mark>). In-page scroll skipped; page top only.',
           );
         }
       } catch (e) {
