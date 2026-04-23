@@ -113,6 +113,8 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
   String? get currentBookPath => _assetPath;
   int get currentPage => _currentPage;
   List<EpubChapter>? get tocTreeList => _tocTreeList;
+  String? get currentSectionName => _getCurrentSectionName();
+  String? get currentSectionFileName => _getCurrentSectionFileName();
   
   // Getters for search
   List<SearchModel> get currentSearchResults => _currentSearchResults;
@@ -277,6 +279,60 @@ class EpubViewerCubit extends Cubit<EpubViewerState> {
     }
 
     return headingText;
+  }
+
+  String? _getCurrentSectionName() {
+    final fileNames = _spineHtmlFileName;
+    final chapters = _tocTreeList;
+    if (fileNames == null ||
+        chapters == null ||
+        fileNames.isEmpty ||
+        chapters.isEmpty ||
+        _currentPage < 0 ||
+        _currentPage >= fileNames.length) {
+      return null;
+    }
+
+    final currentFileName = fileNames[_currentPage];
+    final currentBaseName = currentFileName.split('/').last;
+    final matched = _findChapterByFileName(chapters, currentFileName, currentBaseName);
+    return matched?.Title?.trim();
+  }
+
+  String? _getCurrentSectionFileName() {
+    final fileNames = _spineHtmlFileName;
+    if (fileNames == null ||
+        fileNames.isEmpty ||
+        _currentPage < 0 ||
+        _currentPage >= fileNames.length) {
+      return null;
+    }
+    return fileNames[_currentPage];
+  }
+
+  EpubChapter? _findChapterByFileName(
+    List<EpubChapter> chapters,
+    String fullFileName,
+    String baseFileName,
+  ) {
+    for (final chapter in chapters) {
+      final chapterFile = chapter.ContentFileName;
+      if (chapterFile != null && chapterFile.isNotEmpty) {
+        final chapterBase = chapterFile.split('/').last;
+        if (chapterFile == fullFileName ||
+            chapterFile == baseFileName ||
+            chapterBase == baseFileName) {
+          return chapter;
+        }
+      }
+
+      final sub = chapter.SubChapters;
+      if (sub != null && sub.isNotEmpty) {
+        final subMatch = _findChapterByFileName(sub, fullFileName, baseFileName);
+        if (subMatch != null) return subMatch;
+      }
+    }
+    return null;
   }
 
   Future<void> removeBookmark(String bookPath, String pageNumber) async {

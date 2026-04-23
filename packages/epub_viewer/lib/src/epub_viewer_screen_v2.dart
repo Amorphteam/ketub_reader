@@ -40,6 +40,7 @@ class EpubViewerScreenV2 extends StatefulWidget {
     this.onBookmarksChanged,
     this.onAnchorIdTap,
     this.onExtraActionPressed,
+    this.isExtraActionVisible,
     this.extraActionIcon,
     this.customStyle,
     this.customStyleBuilder,
@@ -63,6 +64,12 @@ class EpubViewerScreenV2 extends StatefulWidget {
     required String? bookName,
     required String? bookPath,
   })? onExtraActionPressed;
+  final bool Function({
+    required int pageNumber,
+    required String? sectionName,
+    required String? bookName,
+    required String? bookPath,
+  })? isExtraActionVisible;
   /// Custom icon for the extra action button (e.g. translate, audio).
   /// When null, defaults to translate icon.
   final IconData? extraActionIcon;
@@ -253,45 +260,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
 
         return Scaffold(
           backgroundColor: stateData.backgroundColor,
-          appBar: cubit.isSliderVisible
-              ? EpubViewerAppBar(
-                  isSearchOpen: cubit.isSearchOpen,
-                  isBookmarked: stateData.isBookmarked,
-                  isAboutUsBook: cubit.isAboutUsBook,
-                  focusNode: focusNode,
-                  textEditingController: textEditingController,
-                  onBackPressed: () => _handleBackPressed(cubit),
-                  onSearchToggle: () {
-                    // Toggle search - this will emit a state to trigger rebuild
-                    final wasOpen = cubit.isSearchOpen;
-                    cubit.toggleSearch(!wasOpen);
-                    // Focus the search field when opened
-                    if (!wasOpen) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted && focusNode.canRequestFocus) {
-                          focusNode.requestFocus();
-                        }
-                      });
-                    }
-                  },
-                  onSearchSubmitted: () {
-                    if (textEditingController.text.isNotEmpty) {
-                      _navigationCoordinator.requestJump();
-                      cubit.searchUsingHtmlList(textEditingController.text);
-                    }
-                  },
-                  onStylePressed: () => _showStyleBottomSheet(context, cubit, stateData),
-                  onBookmarkPressed: () => _handleBookmarkToggle(context, cubit),
-                  onTocPressed: () => _showTocBottomSheet(context, cubit, isDarkMode),
-                  showExtraActionButton: widget.onExtraActionPressed != null,
-                  onExtraActionPressed: widget.onExtraActionPressed != null
-                      ? () => _handleExtraActionPressed(context, stateData)
-                      : null,
-                  extraActionIcon: widget.extraActionIcon,
-                  showSearchButton: widget.showAppBarSearchButton,
-                  showTocButton: widget.showAppBarTocButton,
-                )
-              : null,
+          appBar: _buildAppBar(context, cubit, stateData, isDarkMode),
           body: SafeArea(
             child: Stack(
               children: [
@@ -309,6 +278,88 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
           ),
         );
       },
+    );
+  }
+
+  PreferredSizeWidget? _buildAppBar(
+    BuildContext context,
+    EpubViewerCubit cubit,
+    EpubViewerStateData stateData,
+    bool isDarkMode,
+  ) {
+    if (!cubit.isSliderVisible) {
+      return null;
+    }
+
+    final bool isExtraVisible = _isExtraActionVisible(stateData);
+
+    return EpubViewerAppBar(
+      isSearchOpen: cubit.isSearchOpen,
+      isBookmarked: stateData.isBookmarked,
+      isAboutUsBook: cubit.isAboutUsBook,
+      focusNode: focusNode,
+      textEditingController: textEditingController,
+      onBackPressed: () => _handleBackPressed(cubit),
+      onSearchToggle: () {
+        // Toggle search - this will emit a state to trigger rebuild
+        final wasOpen = cubit.isSearchOpen;
+        cubit.toggleSearch(!wasOpen);
+        // Focus the search field when opened
+        if (!wasOpen) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && focusNode.canRequestFocus) {
+              focusNode.requestFocus();
+            }
+          });
+        }
+      },
+      onSearchSubmitted: () {
+        if (textEditingController.text.isNotEmpty) {
+          _navigationCoordinator.requestJump();
+          cubit.searchUsingHtmlList(textEditingController.text);
+        }
+      },
+      onStylePressed: () => _showStyleBottomSheet(context, cubit, stateData),
+      onBookmarkPressed: () => _handleBookmarkToggle(context, cubit),
+      onTocPressed: () => _showTocBottomSheet(context, cubit, isDarkMode),
+      showExtraActionButton: widget.onExtraActionPressed != null && isExtraVisible,
+      onExtraActionPressed: widget.onExtraActionPressed != null && isExtraVisible
+          ? () => _handleExtraActionPressed(context, stateData)
+          : null,
+      extraActionIcon: widget.extraActionIcon,
+      showSearchButton: widget.showAppBarSearchButton,
+      showTocButton: widget.showAppBarTocButton,
+    );
+  }
+
+  bool _isExtraActionVisible(EpubViewerStateData stateData) {
+    if (widget.onExtraActionPressed == null) {
+      return false;
+    }
+
+    final resolver = widget.isExtraActionVisible;
+    if (resolver == null) {
+      return true;
+    }
+
+    final cubit = context.read<EpubViewerCubit>();
+    final data = widget.entryData;
+    final String? bookPath = data.primaryBookPath ??
+        data.bookmarkBookPath ??
+        data.historyBookPath ??
+        data.searchBookPath ??
+        data.tocBookPath ??
+        data.deepLinkBookPath;
+    final String? bookName = stateData.bookTitle.isNotEmpty
+        ? stateData.bookTitle
+        : cubit.cachedBookTitle;
+    final String? sectionName = cubit.currentSectionFileName;
+
+    return resolver(
+      pageNumber: cubit.currentPage,
+      sectionName: sectionName,
+      bookName: bookName,
+      bookPath: bookPath,
     );
   }
 
@@ -885,6 +936,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
     final String? bookName = stateData.bookTitle.isNotEmpty
         ? stateData.bookTitle
         : cubit.cachedBookTitle;
+    final String? sectionName = cubit.currentSectionFileName;
 
     // Book path from entry data (primary if available, otherwise fallbacks).
     final data = widget.entryData;
@@ -894,10 +946,6 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
         data.searchBookPath ??
         data.tocBookPath ??
         data.deepLinkBookPath;
-
-    // There is no explicit "section name" in the viewer state; host apps
-    // can derive richer context from pageNumber + bookName/bookPath if needed.
-    const String? sectionName = null;
 
     callback(
       context,
