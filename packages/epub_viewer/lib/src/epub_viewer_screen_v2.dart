@@ -767,7 +767,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
           )
         : stateData.uniformTextColor;
     final styleSignature =
-        '${fontSize.index}-${lineHeight.index}-${fontFamily.index}-${stateData.backgroundColor.value}-${stateData.useCustomBackgroundColor}-${stateData.useUniformTextColor}-${resolvedUniformTextColor.value}-${stateData.hideArabicDiacritics}';
+        '${isDarkMode ? 1 : 0}-${fontSize.index}-${lineHeight.index}-${fontFamily.index}-${stateData.backgroundColor.value}-${stateData.useUniformTextColor}-${stateData.uniformTextColor.value}-${stateData.hideArabicDiacritics}';
     final sliderValue = _sliderDragValue ?? stateData.currentPage;
 
     if (content.isEmpty) {
