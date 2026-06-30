@@ -41,6 +41,9 @@ class EpubViewerScreenV2 extends StatefulWidget {
     this.onAnchorIdTap,
     this.onExtraActionPressed,
     this.isExtraActionVisible,
+    this.onEditionSwitchPressed,
+    this.isEditionSwitchVisible,
+    this.showEditionSwitchButton = false,
     this.extraActionIcon,
     this.customStyle,
     this.customStyleBuilder,
@@ -70,6 +73,22 @@ class EpubViewerScreenV2 extends StatefulWidget {
     required String? bookName,
     required String? bookPath,
   })? isExtraActionVisible;
+  final void Function(
+    BuildContext context, {
+    required int pageNumber,
+    required String? sectionFileName,
+    required String? sectionTitle,
+    required String? bookName,
+    required String? bookPath,
+  })? onEditionSwitchPressed;
+  final bool Function({
+    required int pageNumber,
+    required String? sectionName,
+    required String? bookName,
+    required String? bookPath,
+  })? isEditionSwitchVisible;
+  /// When true, allows showing the edition-switch icon when [onEditionSwitchPressed] is set.
+  final bool showEditionSwitchButton;
   /// Custom icon for the extra action button (e.g. translate, audio).
   /// When null, defaults to translate icon.
   final IconData? extraActionIcon;
@@ -292,6 +311,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
     }
 
     final bool isExtraVisible = _isExtraActionVisible(stateData);
+    final bool isEditionSwitchVisible = _isEditionSwitchVisible(stateData);
 
     return EpubViewerAppBar(
       isSearchOpen: cubit.isSearchOpen,
@@ -329,6 +349,72 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
       extraActionIcon: widget.extraActionIcon,
       showSearchButton: widget.showAppBarSearchButton,
       showTocButton: widget.showAppBarTocButton,
+      showEditionSwitchButton: widget.showEditionSwitchButton &&
+          widget.onEditionSwitchPressed != null &&
+          isEditionSwitchVisible,
+      onEditionSwitchPressed: widget.onEditionSwitchPressed != null
+          ? () => _handleEditionSwitchPressed(context, stateData)
+          : null,
+    );
+  }
+
+  bool _isEditionSwitchVisible(EpubViewerStateData stateData) {
+    if (widget.onEditionSwitchPressed == null) {
+      return false;
+    }
+
+    final resolver = widget.isEditionSwitchVisible;
+    if (resolver == null) {
+      return true;
+    }
+
+    final cubit = context.read<EpubViewerCubit>();
+    final data = widget.entryData;
+    final String? bookPath = data.primaryBookPath ??
+        data.bookmarkBookPath ??
+        data.historyBookPath ??
+        data.searchBookPath ??
+        data.tocBookPath ??
+        data.deepLinkBookPath;
+    final String? bookName = stateData.bookTitle.isNotEmpty
+        ? stateData.bookTitle
+        : cubit.cachedBookTitle;
+    final String? sectionName = cubit.currentSectionFileName;
+
+    return resolver(
+      pageNumber: cubit.currentPage,
+      sectionName: sectionName,
+      bookName: bookName,
+      bookPath: bookPath,
+    );
+  }
+
+  void _handleEditionSwitchPressed(
+    BuildContext context,
+    EpubViewerStateData stateData,
+  ) {
+    final callback = widget.onEditionSwitchPressed;
+    if (callback == null) return;
+
+    final cubit = context.read<EpubViewerCubit>();
+    final data = widget.entryData;
+    final String? bookPath = data.primaryBookPath ??
+        data.bookmarkBookPath ??
+        data.historyBookPath ??
+        data.searchBookPath ??
+        data.tocBookPath ??
+        data.deepLinkBookPath;
+    final String? bookName = stateData.bookTitle.isNotEmpty
+        ? stateData.bookTitle
+        : cubit.cachedBookTitle;
+
+    callback(
+      context,
+      pageNumber: cubit.currentPage,
+      sectionFileName: cubit.currentSectionFileName,
+      sectionTitle: cubit.currentSectionName,
+      bookName: bookName,
+      bookPath: bookPath,
     );
   }
 

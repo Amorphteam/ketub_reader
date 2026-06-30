@@ -17,6 +17,8 @@ class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onTocPressed;
   final VoidCallback? onExtraActionPressed;
   final bool showExtraActionButton;
+  final VoidCallback? onEditionSwitchPressed;
+  final bool showEditionSwitchButton;
   /// Custom icon for the extra action button (e.g. translate, audio).
   /// When null, defaults to translate icon for backward compatibility.
   final IconData? extraActionIcon;
@@ -40,6 +42,8 @@ class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onTocPressed,
     this.onExtraActionPressed,
     this.showExtraActionButton = false,
+    this.onEditionSwitchPressed,
+    this.showEditionSwitchButton = false,
     this.extraActionIcon,
     this.showSearchButton = true,
     this.showTocButton = true,
@@ -116,6 +120,15 @@ class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
                             : Icons.translate_rounded),
                   ),
                   onPressed: onExtraActionPressed,
+                ),
+              if (showEditionSwitchButton)
+                IconButton(
+                  icon: Icon(
+                    isIOS
+                        ? CupertinoIcons.arrow_2_squarepath
+                        : Icons.swap_horiz_rounded,
+                  ),
+                  onPressed: onEditionSwitchPressed,
                 ),
               if (showTocButton)
                 IconButton(
