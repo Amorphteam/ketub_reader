@@ -22,6 +22,9 @@ class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
   /// Custom icon for the extra action button (e.g. translate, audio).
   /// When null, defaults to translate icon for backward compatibility.
   final IconData? extraActionIcon;
+  /// Custom icon for the edition-switch button.
+  /// When null, defaults to swap/link-style platform icons.
+  final IconData? editionSwitchIcon;
   /// When false, the search action is not shown (in-reader search cannot be opened from the bar).
   final bool showSearchButton;
   /// When false, the table-of-contents action is not shown.
@@ -45,6 +48,7 @@ class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onEditionSwitchPressed,
     this.showEditionSwitchButton = false,
     this.extraActionIcon,
+    this.editionSwitchIcon,
     this.showSearchButton = true,
     this.showTocButton = true,
   });
@@ -124,9 +128,10 @@ class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
               if (showEditionSwitchButton)
                 IconButton(
                   icon: Icon(
-                    isIOS
-                        ? CupertinoIcons.arrow_2_squarepath
-                        : Icons.swap_horiz_rounded,
+                    editionSwitchIcon ??
+                        (isIOS
+                            ? CupertinoIcons.arrow_2_squarepath
+                            : Icons.swap_horiz_rounded),
                   ),
                   onPressed: onEditionSwitchPressed,
                 ),

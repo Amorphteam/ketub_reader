@@ -45,6 +45,7 @@ class EpubViewerScreenV2 extends StatefulWidget {
     this.isEditionSwitchVisible,
     this.showEditionSwitchButton = false,
     this.extraActionIcon,
+    this.editionSwitchIcon,
     this.customStyle,
     this.customStyleBuilder,
   });
@@ -92,6 +93,9 @@ class EpubViewerScreenV2 extends StatefulWidget {
   /// Custom icon for the extra action button (e.g. translate, audio).
   /// When null, defaults to translate icon.
   final IconData? extraActionIcon;
+  /// Custom icon for the edition-switch button.
+  /// When null, defaults to the package swap icons.
+  final IconData? editionSwitchIcon;
   final Map<String, Style>? customStyle;
   final CustomStyleBuilder? customStyleBuilder;
 
@@ -347,6 +351,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
           ? () => _handleExtraActionPressed(context, stateData)
           : null,
       extraActionIcon: widget.extraActionIcon,
+      editionSwitchIcon: widget.editionSwitchIcon,
       showSearchButton: widget.showAppBarSearchButton,
       showTocButton: widget.showAppBarTocButton,
       showEditionSwitchButton: widget.showEditionSwitchButton &&
