@@ -48,6 +48,7 @@ class EpubViewerScreenV2 extends StatefulWidget {
     this.editionSwitchIcon,
     this.customStyle,
     this.customStyleBuilder,
+    this.keepStatusBarVisible = false,
   });
 
   final EpubViewerEntryData entryData;
@@ -98,6 +99,9 @@ class EpubViewerScreenV2 extends StatefulWidget {
   final IconData? editionSwitchIcon;
   final Map<String, Style>? customStyle;
   final CustomStyleBuilder? customStyleBuilder;
+  /// When true, the status bar stays visible while reading (only the Android
+  /// navigation bar is hidden in immersive mode). Defaults to false.
+  final bool keepStatusBarVisible;
 
   @override
   _EpubViewerScreenV2State createState() => _EpubViewerScreenV2State();
@@ -709,7 +713,12 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
 
   void _updateSystemUI(bool isSliderVisible) {
     if (!isSliderVisible) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: widget.keepStatusBarVisible
+            ? [SystemUiOverlay.top]
+            : [],
+      );
     } else {
       SystemChrome.setEnabledSystemUIMode(
         SystemUiMode.manual,
