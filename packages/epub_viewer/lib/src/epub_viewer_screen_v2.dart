@@ -285,22 +285,35 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
         final stateData = EpubViewerStateExtractor.extract(state, cubit, isDarkMode: isDarkMode);
         _updateSystemUI(cubit.isSliderVisible);
 
-        return Scaffold(
-          backgroundColor: stateData.backgroundColor,
-          appBar: _buildAppBar(context, cubit, stateData, isDarkMode),
-          body: SafeArea(
-            child: Stack(
-              children: [
-                _buildContentArea(
-                  context,
-                  state,
-                  stateData,
-                  isDarkMode,
-                  showBottomBar: widget.showBottomBar && cubit.isSliderVisible,
-                ),
-                _buildSearchNavigation(stateData),
-                if (_openingExternalSearch) _buildOpeningBusyOverlay(context),
-              ],
+        // Dark (black) status bar icons on light page backgrounds, light icons
+        // on dark backgrounds — instead of relying on the theme default.
+        final overlayStyle = _statusBarStyleFor(stateData.backgroundColor);
+
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: overlayStyle,
+          child: Scaffold(
+            backgroundColor: stateData.backgroundColor,
+            appBar: _buildAppBar(
+              context,
+              cubit,
+              stateData,
+              isDarkMode,
+              systemOverlayStyle: overlayStyle,
+            ),
+            body: SafeArea(
+              child: Stack(
+                children: [
+                  _buildContentArea(
+                    context,
+                    state,
+                    stateData,
+                    isDarkMode,
+                    showBottomBar: widget.showBottomBar && cubit.isSliderVisible,
+                  ),
+                  _buildSearchNavigation(stateData),
+                  if (_openingExternalSearch) _buildOpeningBusyOverlay(context),
+                ],
+              ),
             ),
           ),
         );
@@ -308,12 +321,22 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
     );
   }
 
+  /// Status bar icon style matching the reading background: dark icons on a
+  /// light page, light icons on a dark page.
+  SystemUiOverlayStyle _statusBarStyleFor(Color backgroundColor) {
+    final bool lightBackground = backgroundColor.computeLuminance() > 0.5;
+    return lightBackground
+        ? SystemUiOverlayStyle.dark.copyWith(statusBarColor: Colors.transparent)
+        : SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent);
+  }
+
   PreferredSizeWidget? _buildAppBar(
     BuildContext context,
     EpubViewerCubit cubit,
     EpubViewerStateData stateData,
-    bool isDarkMode,
-  ) {
+    bool isDarkMode, {
+    SystemUiOverlayStyle? systemOverlayStyle,
+  }) {
     if (!cubit.isSliderVisible) {
       return null;
     }
@@ -322,6 +345,7 @@ class _EpubViewerScreenV2State extends State<EpubViewerScreenV2> {
     final bool isEditionSwitchVisible = _isEditionSwitchVisible(stateData);
 
     return EpubViewerAppBar(
+      systemOverlayStyle: systemOverlayStyle,
       isSearchOpen: cubit.isSearchOpen,
       isBookmarked: stateData.isBookmarked,
       isAboutUsBook: cubit.isAboutUsBook,

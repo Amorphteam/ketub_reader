@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 
 class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -29,6 +30,8 @@ class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showSearchButton;
   /// When false, the table-of-contents action is not shown.
   final bool showTocButton;
+  /// Status bar style (icon brightness). When null, falls back to the theme.
+  final SystemUiOverlayStyle? systemOverlayStyle;
 
   const EpubViewerAppBar({
     super.key,
@@ -51,6 +54,7 @@ class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.editionSwitchIcon,
     this.showSearchButton = true,
     this.showTocButton = true,
+    this.systemOverlayStyle,
   });
 
   @override
@@ -62,6 +66,7 @@ class EpubViewerAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     return AppBar(
       backgroundColor: Colors.transparent,
+      systemOverlayStyle: systemOverlayStyle,
       leading: IconButton(
         icon: isSearchOpen
             ? Icon(isIOS ? CupertinoIcons.xmark : Icons.close)
